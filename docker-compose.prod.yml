@@ -14,6 +14,11 @@ services:
         limits:
           cpus: '0.75'
           memory: 1G
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
 
   frontend:
     restart: always
@@ -24,6 +29,11 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     # Use production build variables if needed
     environment:
       - REACT_APP_API_URL=/api  # Assuming API is proxied through Nginx
@@ -35,8 +45,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/cache:/var/cache/nginx
     depends_on:
       - backend
       - frontend
@@ -45,4 +56,14 @@ services:
       resources:
         limits:
           cpus: '0.25'
-          memory: 128M 
+          memory: 128M
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3 

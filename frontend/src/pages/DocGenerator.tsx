@@ -56,7 +56,7 @@ const languages = [
   'rust',
 ];
 
-const DocGenerator = () => {
+const DocGenerator: React.FC = () => {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('python');
   const [context, setContext] = useState('');
@@ -92,7 +92,7 @@ const DocGenerator = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Documentation Generator
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary" paragraph>
+        <Typography variant="body1" paragraph>
           Generate comprehensive documentation for your code.
         </Typography>
 
