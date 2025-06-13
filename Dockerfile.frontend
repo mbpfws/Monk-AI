@@ -1,0 +1,37 @@
+FROM node:18-alpine AS build
+
+WORKDIR /app
+
+# Copy package.json first for better caching
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Create public directory and add required files
+RUN mkdir -p /app/public
+
+# Copy the rest of the frontend code
+COPY frontend/src ./src
+COPY frontend/public ./public
+COPY frontend/tsconfig*.json ./
+
+# Build the application
+RUN npm run build
+
+# Production stage - use more secure image version
+FROM nginx:1.25.3-alpine-slim
+
+# Copy the build output to replace the default nginx contents
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Set proper permissions
+RUN chmod -R 755 /usr/share/nginx/html && \
+    chown -R nginx:nginx /usr/share/nginx/html
+
+# Use non-root user
+USER nginx
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"] 
