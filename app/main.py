@@ -2,21 +2,77 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+import os
+import sys
 
-# Import agent classes
-from agents.pr_reviewer import PRReviewer
-from agents.doc_generator import DocGenerator
-from agents.test_generator import TestGenerator
-from agents.code_optimizer import CodeOptimizer
-from agents.security_analyzer import SecurityAnalyzer
-from agents.ideation import Ideation
-from dotenv import load_dotenv
+# Add the current directory to path so we can import modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Load environment variables
-load_dotenv()
+# Add the agents directory to path if it exists
+agents_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "agents")
+if os.path.exists(agents_path):
+    sys.path.append(agents_path)
+
+# Try to import agent classes, but use mock classes if imports fail
+try:
+    from agents.pr_reviewer import PRReviewer
+    from agents.doc_generator import DocGenerator
+    from agents.test_generator import TestGenerator
+    from agents.code_optimizer import CodeOptimizer
+    from agents.security_analyzer import SecurityAnalyzer
+    from agents.ideation import Ideation
+    agents_available = True
+except ImportError:
+    # Create mock classes if the real ones aren't available
+    agents_available = False
+    
+    class MockAgent:
+        async def mock_response(self, *args, **kwargs):
+            return {"message": "This is a mock response. The actual agent module is not available."}
+    
+    class PRReviewer(MockAgent):
+        async def review_pr(self, *args, **kwargs):
+            return await self.mock_response()
+    
+    class DocGenerator(MockAgent):
+        async def generate_docs(self, *args, **kwargs):
+            return await self.mock_response()
+    
+    class TestGenerator(MockAgent):
+        async def generate_tests(self, *args, **kwargs):
+            return await self.mock_response()
+    
+    class CodeOptimizer(MockAgent):
+        async def optimize_code(self, *args, **kwargs):
+            return await self.mock_response()
+    
+    class SecurityAnalyzer(MockAgent):
+        async def analyze_security(self, *args, **kwargs):
+            return await self.mock_response()
+    
+    class Ideation(MockAgent):
+        async def generate_project_scope(self, *args, **kwargs):
+            return await self.mock_response()
+        
+        async def generate_technical_specs(self, *args, **kwargs):
+            return await self.mock_response()
+        
+        async def generate_user_stories(self, *args, **kwargs):
+            return await self.mock_response()
+        
+        async def generate_sprint_plan(self, *args, **kwargs):
+            return await self.mock_response()
+
+# Try to load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # If dotenv isn't available, we'll just continue without it
+    pass
 
 app = FastAPI(
-    title="TraeDevMate API",
+    title="Monk AI API",
     description="AI-powered code review and documentation generation system",
     version="1.0.0"
 )
@@ -59,14 +115,18 @@ class SecurityAnalysisRequest(BaseModel):
 # Routes
 @app.get("/")
 async def root():
-    return {"message": "Welcome to TraeDevMate API"}
+    return {"message": "Welcome to Monk AI API", "agents_available": agents_available}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 @app.post("/api/review-pr")
 async def review_pr(request: PRReviewRequest):
     try:
         reviewer = PRReviewer()
-        result = await reviewer.review_pr(request.pr_url, request.github_token)
-        return result
+        result = await reviewer.review_pr(request.pr_url, request.repository)
+        return {"review": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error reviewing PR: {str(e)}")
 
