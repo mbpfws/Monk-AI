@@ -35,11 +35,21 @@ class Settings(BaseSettings):
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     REDIS_CACHE_EXPIRE_SECONDS: int = int(os.getenv("REDIS_CACHE_EXPIRE_SECONDS", "3600"))
     
-    # AI Model Settings
+    # AI Model Settings (Legacy)
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
     AI_MODEL: str = os.getenv("AI_MODEL", "gpt-4")
     AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", "0.7"))
     AI_MAX_TOKENS: int = int(os.getenv("AI_MAX_TOKENS", "1000"))
+    
+    # Multi-Provider AI API Keys
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
+    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+    NOVITA_API_KEY: str = os.getenv("NOVITA_API_KEY", "")
+    
+    # GitHub Integration
+    GITHUB_TOKEN: str = os.getenv("GITHUB_TOKEN", "")
     
     # Agent Settings
     MAX_CONCURRENT_AGENTS: int = int(os.getenv("MAX_CONCURRENT_AGENTS", "5"))

@@ -369,7 +369,7 @@ class PRReviewer:
         """
         Generate review comments based on code analysis.
         """
-        # Use GPT-4 for generating review comments
+        # Use GPT-4o for generating review comments
         review_prompt = f"""
         Based on the following code analysis, generate a structured PR review:
         {analysis['analysis']}

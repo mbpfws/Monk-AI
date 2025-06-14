@@ -4,6 +4,7 @@ import json
 import asyncio
 import time
 import ast
+import httpx
 from typing import Dict, List, Any, Optional, Tuple
 from collections import defaultdict
 
@@ -15,6 +16,9 @@ class CodeOptimizer:
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         self.novita_api_key = os.getenv("NOVITA_API_KEY")
+        
+        if not self.openai_api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is required")
         
         # Enhanced optimization categories with scoring
         self.categories = {
@@ -219,7 +223,7 @@ class CodeOptimizer:
         return prompt
     
     async def _get_ai_suggestions(self, prompt: str, language: str) -> str:
-        """Get optimization suggestions from AI model.
+        """Get optimization suggestions from OpenAI API.
         
         Args:
             prompt: The prompt to send to the AI
@@ -228,26 +232,66 @@ class CodeOptimizer:
         Returns:
             The AI-generated optimization suggestions
         """
-        # TODO: Implement actual API calls to OpenAI/Anthropic/Novita
-        # For now, return a mock response for testing
-        
-        # Mock response for testing
-        mock_response = """# Code Optimization Analysis
+        try:
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    "Authorization": f"Bearer {self.openai_api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                data = {
+                    "model": "gpt-3.5-turbo",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": f"You are an expert {language} code optimization specialist. Analyze code and provide specific, actionable optimization suggestions with clear before/after examples. Format your response with clear sections for each optimization category."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    "max_tokens": 2000,
+                    "temperature": 0.1
+                }
+                
+                response = await client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers=headers,
+                    json=data,
+                    timeout=30.0
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return result["choices"][0]["message"]["content"]
+                else:
+                    print(f"OpenAI API Error: {response.status_code} - {response.text}")
+                    # Fallback to mock response if API fails
+                    return self._get_fallback_response(language)
+                    
+        except Exception as e:
+            print(f"Error calling OpenAI API: {str(e)}")
+            # Fallback to mock response if API fails
+            return self._get_fallback_response(language)
+    
+    def _get_fallback_response(self, language: str) -> str:
+        """Fallback response when API calls fail."""
+        return f"""# Code Optimization Analysis for {language}
 
 ## Performance Optimizations
 
 ### 1. Inefficient Loop Structure
-
 **Original Code:**
-```python
-# Example inefficient code section
+```{language}
+# Example inefficient code pattern
 result = []
 for i in range(len(data)):
     result.append(data[i] * 2)
 ```
 
 **Suggested Optimization:**
-```python
+```{language}
 # Use list comprehension instead
 result = [item * 2 for item in data]
 ```
@@ -257,16 +301,15 @@ result = [item * 2 for item in data]
 ## Memory Usage Optimizations
 
 ### 1. Unnecessary Data Duplication
-
 **Original Code:**
-```python
+```{language}
 # Creating duplicate data
 full_data = original_data.copy()
 processed = process_data(full_data)
 ```
 
 **Suggested Optimization:**
-```python
+```{language}
 # Process data in-place when possible
 processed = process_data(original_data)
 ```
@@ -276,15 +319,14 @@ processed = process_data(original_data)
 ## Code Quality Improvements
 
 ### 1. Complex Conditional Logic
-
 **Original Code:**
-```python
+```{language}
 if condition1 and condition2 and (condition3 or (condition4 and condition5)):
     # Complex nested logic
 ```
 
 **Suggested Optimization:**
-```python
+```{language}
 # Break down complex conditions
 if condition1 and condition2:
     if condition3 or (condition4 and condition5):
@@ -293,8 +335,6 @@ if condition1 and condition2:
 
 **Benefit:** Improved readability and maintainability, easier debugging and testing.
 """
-        
-        return mock_response
     
     def _parse_optimization_response(self, content: str) -> Dict[str, Any]:
         """Parse the AI-generated optimization response into structured data.

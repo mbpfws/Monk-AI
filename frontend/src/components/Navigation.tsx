@@ -8,6 +8,7 @@ import {
   Chip
 } from '@mui/material';
 import {
+  Dashboard as DashboardIcon,
   Psychology as PsychologyIcon,
   Code as CodeIcon,
   Description as DescriptionIcon,
@@ -27,6 +28,12 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
+  {
+    path: '/dashboard',
+    label: 'Dashboard',
+    icon: <DashboardIcon />,
+    color: '#2196f3'
+  },
   {
     path: '/orchestrator',
     label: 'Multi-Agent',

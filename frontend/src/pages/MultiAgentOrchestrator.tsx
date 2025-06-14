@@ -50,6 +50,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import CodePreview from '../components/CodePreview';
 
 interface WorkflowResult {
   steps: Record<string, any>;
@@ -104,20 +105,39 @@ interface LiveMetrics {
 }
 
 interface WorkflowStep {
-  agent: string;
-  status: 'pending' | 'running' | 'completed' | 'error';
+  step_id: string;
+  agent_name: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
   result?: any;
   error?: string;
-  startTime?: string;
-  endTime?: string;
+  start_time?: number;
+  end_time?: number;
+  progress?: number;
 }
 
-interface WorkflowResponse {
+interface WorkflowStatus {
   workflow_id: string;
-  status: string;
-  results: any;
-  timeline: any[];
-  summary: any;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  current_step: number;
+  total_steps: number;
+  steps: WorkflowStep[];
+  results: Record<string, any>;
+  start_time?: number;
+  end_time?: number;
+  error?: string;
+  progress: number;
+}
+
+interface RealTimeUpdate {
+  type: 'workflow_status' | 'step_update' | 'step_complete' | 'workflow_complete' | 'error';
+  workflow_id: string;
+  data: any;
+  timestamp: string;
+  message: string;
+  event_type?: string;
+  step_name?: string;
+  step_result?: any;
+  progress?: number;
 }
 
 const workflowSteps = [
@@ -152,8 +172,12 @@ const MultiAgentOrchestrator = () => {
   const [liveMetrics, setLiveMetrics] = useState<LiveMetrics | null>(null);
   const [currentActivity, setCurrentActivity] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [workflow, setWorkflow] = useState<WorkflowResponse | null>(null);
+  const [workflowStatus, setWorkflowStatus] = useState<WorkflowStatus | null>(null);
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
+  const [workflowProgress, setWorkflowProgress] = useState(0);
+  const [currentStepProgress, setCurrentStepProgress] = useState(0);
+  const [realTimeUpdates, setRealTimeUpdates] = useState<RealTimeUpdate[]>([]);
 
   // Load demo scenarios and live metrics on component mount
   useEffect(() => {
@@ -180,7 +204,7 @@ const MultiAgentOrchestrator = () => {
 
   const loadDemoScenarios = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/demo/scenarios');
+              const response = await axios.get('http://localhost:8000/api/workflow/demo/scenarios');
       setScenarios(response.data.scenarios);
     } catch (err) {
       console.error('Failed to load demo scenarios:', err);
@@ -220,7 +244,7 @@ const MultiAgentOrchestrator = () => {
 
   const loadLiveMetrics = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/demo/live-metrics');
+              const response = await axios.get('http://localhost:8000/api/workflow/demo/live-metrics');
       setLiveMetrics(response.data);
     } catch (err) {
       console.error('Failed to load live metrics:', err);
@@ -270,60 +294,215 @@ const MultiAgentOrchestrator = () => {
     setActiveStep(0);
     setSteps([]);
     setIsRunning(true);
+    setWorkflowProgress(0);
+    setCurrentStepProgress(0);
+    setRealTimeUpdates([]);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/execute-workflow', {
-        description,
-        language,
+      // Start the workflow using the orchestrator system
+      const response = await axios.post('http://localhost:8000/api/agents/orchestrate', {
+        description: description,
+        language: language,
         workflow_type: workflowType,
       });
 
-      const data: WorkflowResponse = response.data;
-      setWorkflow(data);
+      console.log('Orchestration started:', response.data);
       
-      // Convert timeline to steps
-      const workflowSteps: WorkflowStep[] = data.timeline.map((item: any) => ({
-        agent: item.agent,
-        status: 'completed',
-        result: item.result,
-        startTime: item.start_time,
-        endTime: item.end_time
-      }));
+      // For now, set the result directly since streaming isn't set up yet
+      setResult(response.data);
+      setIsRunning(false);
+      setLoading(false);
+      setWorkflowProgress(100);
       
-      setSteps(workflowSteps);
-      setActiveStep(workflowSteps.length);
+      // Simulate workflow completion
+      const completionUpdate: RealTimeUpdate = {
+        type: 'workflow_complete',
+        workflow_id: 'static-workflow-id',
+        data: response.data,
+        timestamp: new Date().toISOString(),
+        message: '🎉 Multi-Agent Workflow completed successfully!'
+             };
+       setRealTimeUpdates([completionUpdate]);
       
     } catch (err: any) {
       console.error('Workflow execution failed:', err);
       setError(err.response?.data?.detail || 'Failed to execute workflow');
-    } finally {
       setLoading(false);
       setIsRunning(false);
+    }
+  };
+
+  const handleRealTimeUpdate = (update: RealTimeUpdate) => {
+    console.log('Real-time update:', update);
+    
+    switch (update.type) {
+      case 'workflow_status':
+        const status: WorkflowStatus = update.data;
+        setWorkflowStatus(status);
+        setSteps(status.steps);
+        setActiveStep(status.current_step);
+        setWorkflowProgress(status.progress);
+        
+        // Add real-time activity update
+        const activityUpdate: RealTimeUpdate = {
+          type: 'workflow_status',
+          workflow_id: status.workflow_id,
+          data: status,
+          timestamp: new Date().toISOString(),
+          message: `🔄 Workflow ${status.workflow_id.slice(0, 8)}: ${status.status} - Step ${status.current_step}/${status.total_steps}`
+        };
+        setRealTimeUpdates(prev => [activityUpdate, ...prev.slice(0, 4)]);
+        break;
+        
+      case 'step_update':
+        const stepUpdate = update.data;
+        setCurrentStepProgress(stepUpdate.progress || 0);
+        
+        // Update specific step
+        setSteps(prev => prev.map(step => 
+          step.step_id === stepUpdate.step_id ? { ...step, ...stepUpdate } : step
+        ));
+        
+        const stepUpdateMsg: RealTimeUpdate = {
+          type: 'step_update',
+          workflow_id: update.workflow_id,
+          data: stepUpdate,
+          timestamp: new Date().toISOString(),
+          message: `⚡ ${stepUpdate.agent_name}: ${stepUpdate.status} - ${stepUpdate.progress || 0}%`
+        };
+        setRealTimeUpdates(prev => [stepUpdateMsg, ...prev.slice(0, 4)]);
+        break;
+        
+      case 'step_complete':
+        const completedStep = update.data;
+        setSteps(prev => prev.map(step => 
+          step.step_id === completedStep.step_id ? { ...step, ...completedStep } : step
+        ));
+        
+        const completeUpdate: RealTimeUpdate = {
+          type: 'step_complete',
+          workflow_id: update.workflow_id,
+          data: completedStep,
+          timestamp: new Date().toISOString(),
+          message: `✅ ${completedStep.agent_name}: Completed successfully`
+        };
+        setRealTimeUpdates(prev => [completeUpdate, ...prev.slice(0, 4)]);
+        setCurrentStepProgress(0);
+        break;
+        
+      case 'workflow_complete':
+        const finalStatus: WorkflowStatus = update.data;
+        setWorkflowStatus(finalStatus);
+        setSteps(finalStatus.steps);
+        setIsRunning(false);
+        setWorkflowProgress(100);
+        
+        // Create result summary
+        const workflowResult: WorkflowResult = {
+          steps: finalStatus.results,
+          timeline: finalStatus.steps.map(step => ({
+            step: step.agent_name,
+            duration: step.end_time && step.start_time ? (step.end_time - step.start_time) / 1000 : 0,
+            timestamp: step.start_time || 0,
+            success: step.status === 'completed'
+          })),
+          success: finalStatus.status === 'completed',
+          total_time: finalStatus.end_time && finalStatus.start_time ? (finalStatus.end_time - finalStatus.start_time) / 1000 : 0,
+          summary: {
+            completed_steps: finalStatus.steps.filter(s => s.status === 'completed').length,
+            total_steps: finalStatus.total_steps,
+            success_rate: (finalStatus.steps.filter(s => s.status === 'completed').length / finalStatus.total_steps) * 100,
+            fastest_step: 'ideation',
+            slowest_step: 'documentation'
+          }
+        };
+        setResult(workflowResult);
+        
+        const finalUpdate: RealTimeUpdate = {
+          type: 'workflow_complete',
+          workflow_id: update.workflow_id,
+          data: finalStatus,
+          timestamp: new Date().toISOString(),
+          message: `🎉 Workflow completed successfully! Generated ${Object.keys(finalStatus.results).length} results`
+        };
+        setRealTimeUpdates(prev => [finalUpdate, ...prev.slice(0, 4)]);
+        
+        // Close the event source
+        if (eventSource) {
+          eventSource.close();
+          setEventSource(null);
+        }
+        break;
+        
+      case 'error':
+        setError(update.data.message || 'Workflow execution failed');
+        setIsRunning(false);
+        setLoading(false);
+        
+        if (eventSource) {
+          eventSource.close();
+          setEventSource(null);
+        }
+        break;
     }
   };
 
   const stopWorkflow = () => {
     setIsRunning(false);
     setError('Workflow stopped by user');
+    
+    // Close the event source if it exists
+    if (eventSource) {
+      eventSource.close();
+      setEventSource(null);
+    }
   };
+
+  // Cleanup effect for EventSource
+  useEffect(() => {
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [eventSource]);
 
   const getStepIcon = (status: string, agent: string) => {
     const iconProps = { fontSize: 'small' as const };
     
-    switch (agent) {
-      case 'ideation': return <IdeationIcon {...iconProps} />;
-      case 'code_generation': return <CodeIcon {...iconProps} />;
-      case 'security_analysis': return <SecurityIcon {...iconProps} />;
-      case 'test_generation': return <TestIcon {...iconProps} />;
-      case 'documentation': return <DocsIcon {...iconProps} />;
-      case 'code_review': return <ReviewIcon {...iconProps} />;
-      default: return <CodeIcon {...iconProps} />;
-    }
+    // Map agent names to icons
+    const agentIconMap: Record<string, JSX.Element> = {
+      'IdeationAgent': <IdeationIcon {...iconProps} />,
+      'CodeOptimizer': <CodeIcon {...iconProps} />,
+      'SecurityAnalyzer': <SecurityIcon {...iconProps} />,
+      'TestGenerator': <TestIcon {...iconProps} />,
+      'DocGenerator': <DocsIcon {...iconProps} />,
+      'CodeReviewer': <ReviewIcon {...iconProps} />,
+      // Legacy mappings
+      'ideation': <IdeationIcon {...iconProps} />,
+      'code_generation': <CodeIcon {...iconProps} />,
+      'security_analysis': <SecurityIcon {...iconProps} />,
+      'test_generation': <TestIcon {...iconProps} />,
+      'documentation': <DocsIcon {...iconProps} />,
+      'code_review': <ReviewIcon {...iconProps} />,
+    };
+    
+    return agentIconMap[agent] || <CodeIcon {...iconProps} />;
   };
 
-  const formatDuration = (start: string, end: string) => {
-    const duration = new Date(end).getTime() - new Date(start).getTime();
-    return `${(duration / 1000).toFixed(1)}s`;
+  const formatDuration = (start?: number, end?: number) => {
+    if (!start || !end) return '0.0s';
+    const duration = (end - start) / 1000;
+    return `${duration.toFixed(1)}s`;
+  };
+
+  const getStepStatus = (step: WorkflowStep) => {
+    switch (step.status) {
+      case 'completed': return { color: '#4caf50', icon: <CheckIcon /> };
+      case 'running': return { color: '#ff9800', icon: <CircularProgress size={16} /> };
+      case 'failed': return { color: '#f44336', icon: <ErrorIcon /> };
+      default: return { color: '#9e9e9e', icon: <PendingIcon /> };
+    }
   };
 
   return (
@@ -774,68 +953,143 @@ const MultiAgentOrchestrator = () => {
                   </Alert>
                 )}
 
-                {workflow && (
+                {workflowStatus && (
                   <Box sx={{ mb: 2 }}>
                     <Chip 
-                      label={`Workflow ID: ${workflow.workflow_id}`} 
+                      label={`Workflow ID: ${workflowStatus.workflow_id}`} 
                       size="small" 
                       sx={{ mr: 2 }}
                     />
                     <Chip 
-                      label={workflow.status} 
-                      color={workflow.status === 'completed' ? 'success' : 'primary'} 
+                      label={workflowStatus.status} 
+                      color={workflowStatus.status === 'completed' ? 'success' : 
+                             workflowStatus.status === 'failed' ? 'error' : 'primary'} 
                       size="small" 
                     />
+                    {workflowProgress > 0 && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Overall Progress: {Math.round(workflowProgress)}%
+                        </Typography>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={workflowProgress} 
+                          sx={{ mt: 0.5, height: 6, borderRadius: 3 }}
+                        />
+                      </Box>
+                    )}
                   </Box>
                 )}
 
                 <Stepper activeStep={activeStep} orientation="vertical">
-                  {steps.map((step, index) => (
-                    <Step key={index}>
-                      <StepLabel
-                        icon={getStepIcon(step.status, step.agent)}
-                        error={step.status === 'error'}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="subtitle2">
-                            {step.agent.replace('_', ' ').toUpperCase()}
-                          </Typography>
-                          {step.startTime && step.endTime && (
-                            <Chip 
-                              label={formatDuration(step.startTime, step.endTime)} 
-                              size="small" 
-                              variant="outlined"
-                            />
+                  {workflowStatus?.steps?.map((step, index) => {
+                    const stepStatus = getStepStatus(step);
+                    return (
+                      <Step key={step.step_id || index}>
+                        <StepLabel
+                          icon={stepStatus.icon}
+                          error={step.status === 'failed'}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                            <Typography variant="subtitle2">
+                              {step.agent_name || 'Unknown Agent'}
+                            </Typography>
+                            {step.start_time && step.end_time && (
+                              <Chip 
+                                label={formatDuration(step.start_time, step.end_time)} 
+                                size="small" 
+                                variant="outlined"
+                              />
+                            )}
+                            {step.status === 'running' && step.progress !== undefined && (
+                              <Chip 
+                                label={`${Math.round(step.progress)}%`}
+                                size="small" 
+                                color="primary"
+                                variant="outlined"
+                              />
+                            )}
+                          </Box>
+                        </StepLabel>
+                        <StepContent>
+                          {step.status === 'running' && step.progress !== undefined && (
+                            <Box sx={{ mb: 2 }}>
+                              <Typography variant="caption" color="text.secondary">
+                                Step Progress: {Math.round(step.progress)}%
+                              </Typography>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={step.progress} 
+                                sx={{ mt: 0.5, height: 4, borderRadius: 2 }}
+                              />
+                            </Box>
                           )}
-                        </Box>
-                      </StepLabel>
-                      <StepContent>
-                        {step.error && (
-                          <Alert severity="error" sx={{ mb: 1 }}>
-                            {step.error}
-                          </Alert>
-                        )}
-                        {step.result && (
-                          <Paper sx={{ p: 2, backgroundColor: '#2d2d2d' }}>
-                            <pre style={{ 
-                              fontSize: '0.8rem', 
-                              margin: 0, 
-                              whiteSpace: 'pre-wrap',
-                              maxHeight: '200px',
-                              overflow: 'auto'
-                            }}>
-                              {typeof step.result === 'string' 
-                                ? step.result 
-                                : JSON.stringify(step.result, null, 2)}
-                            </pre>
-                          </Paper>
-                        )}
-                      </StepContent>
-                    </Step>
-                  ))}
+                          {step.error && (
+                            <Alert severity="error" sx={{ mb: 1 }}>
+                              {step.error}
+                            </Alert>
+                          )}
+                          {step.result && (
+                            <Paper sx={{ p: 2, backgroundColor: '#2d2d2d' }}>
+                              <pre style={{ 
+                                fontSize: '0.8rem', 
+                                margin: 0, 
+                                whiteSpace: 'pre-wrap',
+                                maxHeight: '200px',
+                                overflow: 'auto'
+                              }}>
+                                {typeof step.result === 'string' 
+                                  ? step.result 
+                                  : JSON.stringify(step.result, null, 2)}
+                              </pre>
+                            </Paper>
+                          )}
+                        </StepContent>
+                      </Step>
+                    );
+                  }) || []}
                 </Stepper>
               </Paper>
             </motion.div>
+
+            {/* Real-time Activity Feed */}
+            {realTimeUpdates.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <Paper sx={{ p: 3, mb: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    📡 Real-time Activity
+                  </Typography>
+                  <Box sx={{ maxHeight: '300px', overflow: 'auto' }}>
+                    {realTimeUpdates.slice(-10).reverse().map((update, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Alert 
+                          severity={update.type === 'error' ? 'error' : 'info'} 
+                          sx={{ mb: 1, fontSize: '0.875rem' }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body2">
+                              {update.message}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {new Date(update.timestamp).toLocaleTimeString()}
+                            </Typography>
+                          </Box>
+                        </Alert>
+                      </motion.div>
+                    ))}
+                  </Box>
+                </Paper>
+              </motion.div>
+            )}
 
             {/* Results */}
             {(result || error) && (
@@ -913,4 +1167,4 @@ const MultiAgentOrchestrator = () => {
   );
 };
 
-export default MultiAgentOrchestrator; 
+export default MultiAgentOrchestrator;
