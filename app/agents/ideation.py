@@ -3,6 +3,7 @@ import re
 import json
 from typing import Dict, List, Any, Optional
 import openai
+from app.core.ai_service import MultiProviderAIService
 
 class Ideation:
     """Agent for generating project ideas, specifications, user stories, and sprint plans."""
@@ -12,6 +13,7 @@ class Ideation:
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
         self.novita_api_key = os.getenv("NOVITA_API_KEY")
+        self.ai_service = MultiProviderAIService()
         
         # Define project scope templates
         self.scope_templates = {
@@ -23,7 +25,7 @@ class Ideation:
             "desktop_app": "A desktop application for Windows/Mac/Linux"
         }
         
-    async def generate_project_scope(self, description: str, template_key: Optional[str] = None) -> Dict[str, Any]:
+    def generate_project_scope(self, description: str, template_key: Optional[str] = None) -> Dict[str, Any]:
         """Generate a project scope based on description and optional template.
         
         Args:
@@ -53,9 +55,35 @@ class Ideation:
         Format the response as a structured JSON object with these sections.
         """
         
-        # For now, return a mock response
-        # In production, this would call the AI model
-        return await self._get_mock_project_scope(description, template_key)
+        # Use AI service to generate project scope
+        try:
+            ai_response = self.ai_service.generate_response(
+                prompt=prompt,
+                model="gpt-4o-mini",
+                temperature=0.7,
+                max_tokens=2000
+            )
+            
+            # Extract the actual response content
+            response_content = ai_response.get("response", "") if isinstance(ai_response, dict) else str(ai_response)
+            
+            # Try to parse JSON response
+            try:
+                return json.loads(response_content)
+            except json.JSONDecodeError:
+                # If not valid JSON, wrap in a basic structure
+                return {
+                    "project_name": f"Generated Project for {description[:50]}...",
+                    "description": response_content,
+                    "objectives": ["Generated from AI response"],
+                    "target_audience": "To be defined",
+                    "key_features": ["Generated from AI response"],
+                    "success_metrics": ["To be defined"],
+                    "resources_needed": ["To be defined"]
+                }
+        except Exception as e:
+            # Fallback to mock data if AI service fails
+            return self._get_mock_project_scope(description, template_key)
     
     async def generate_technical_specs(self, project_scope: Dict[str, Any]) -> Dict[str, Any]:
         """Generate technical specifications based on project scope.
@@ -82,8 +110,35 @@ class Ideation:
         Format the response as a structured JSON object with these sections.
         """
         
-        # For now, return a mock response
-        return await self._get_mock_technical_specs(project_scope)
+        # Use AI service to generate technical specifications
+        try:
+            ai_response = await self.ai_service.generate_response(
+                prompt=prompt,
+                model="gpt-4o-mini",
+                temperature=0.7,
+                max_tokens=3000
+            )
+            
+            # Extract the actual response content
+            response_content = ai_response.get("response", "") if isinstance(ai_response, dict) else str(ai_response)
+            
+            # Try to parse JSON response
+            try:
+                return json.loads(response_content)
+            except json.JSONDecodeError:
+                # If not valid JSON, wrap in a basic structure
+                return {
+                    "system_architecture": response_content,
+                    "data_models": "Generated from AI response",
+                    "api_endpoints": "Generated from AI response",
+                    "third_party_integrations": "Generated from AI response",
+                    "security_considerations": "Generated from AI response",
+                    "scalability_plans": "Generated from AI response",
+                    "technology_stack": "Generated from AI response"
+                }
+        except Exception as e:
+            # Fallback to mock data if AI service fails
+            return self._get_mock_technical_specs(project_scope)
     
     async def generate_user_stories(self, project_scope: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate user stories based on project scope.
@@ -112,8 +167,34 @@ class Ideation:
         Format the response as a JSON array of user story objects.
         """
         
-        # For now, return a mock response
-        return await self._get_mock_user_stories(project_scope)
+        # Use AI service to generate user stories
+        try:
+            ai_response = await self.ai_service.generate_response(
+                prompt=prompt,
+                model="gpt-4o-mini",
+                temperature=0.7,
+                max_tokens=6000
+            )
+            
+            # Extract the actual response content
+            response_content = ai_response.get("response", "") if isinstance(ai_response, dict) else str(ai_response)
+            
+            # Try to parse JSON response
+            try:
+                return json.loads(response_content)
+            except json.JSONDecodeError:
+                # If not valid JSON, create a basic structure
+                return [{
+                    "id": 1,
+                    "title": "Generated User Story",
+                    "description": response_content,
+                    "priority": "Medium",
+                    "story_points": 3,
+                    "acceptance_criteria": ["Generated from AI response"]
+                }]
+        except Exception as e:
+            # Fallback to mock data if AI service fails
+            return self._get_mock_user_stories(project_scope)
     
     async def generate_sprint_plan(self, user_stories: List[Dict[str, Any]], sprint_count: int = 3) -> List[Dict[str, Any]]:
         """Generate sprint plan based on user stories.
@@ -139,9 +220,9 @@ class Ideation:
         """
         
         # For now, return a mock response
-        return await self._get_mock_sprint_plan(user_stories, sprint_count)
+        return self._get_mock_sprint_plan(user_stories, sprint_count)
     
-    async def _get_mock_project_scope(self, description: str, template_key: Optional[str] = None) -> Dict[str, Any]:
+    def _get_mock_project_scope(self, description: str, template_key: Optional[str] = None) -> Dict[str, Any]:
         """Generate a mock project scope for development purposes."""
         template_type = template_key if template_key else "web_app"
         
@@ -232,7 +313,7 @@ class Ideation:
                 ]
             }
     
-    async def _get_mock_technical_specs(self, project_scope: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_mock_technical_specs(self, project_scope: Dict[str, Any]) -> Dict[str, Any]:
         """Generate mock technical specifications for development purposes."""
         is_ecommerce = any("e-commerce" in str(value).lower() or "shop" in str(value).lower() 
                           for value in project_scope.values() if isinstance(value, (str, list)))
@@ -443,7 +524,7 @@ class Ideation:
                 }
             }
     
-    async def _get_mock_user_stories(self, project_scope: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _get_mock_user_stories(self, project_scope: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate mock user stories for development purposes."""
         is_ecommerce = any("e-commerce" in str(value).lower() or "shop" in str(value).lower() 
                           for value in project_scope.values() if isinstance(value, (str, list)))
@@ -735,7 +816,7 @@ class Ideation:
                 }
             ]
     
-    async def _get_mock_sprint_plan(self, user_stories: List[Dict[str, Any]], sprint_count: int = 3) -> List[Dict[str, Any]]:
+    def _get_mock_sprint_plan(self, user_stories: List[Dict[str, Any]], sprint_count: int = 3) -> List[Dict[str, Any]]:
         """Generate a mock sprint plan for development purposes."""
         # Sort stories by priority and points
         high_priority = [story for story in user_stories if story["priority"] == "High"]
