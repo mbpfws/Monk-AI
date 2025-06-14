@@ -214,7 +214,7 @@ class CodeOptimizer:
         ```{language}
         {code}
         ```
-        """
+        """.replace('{language}', language)
         
         return prompt
     
@@ -232,14 +232,14 @@ class CodeOptimizer:
         # For now, return a mock response for testing
         
         # Mock response for testing
-        mock_response = f"""# Code Optimization Analysis
+        mock_response = """# Code Optimization Analysis
 
 ## Performance Optimizations
 
 ### 1. Inefficient Loop Structure
 
 **Original Code:**
-```{language}
+```python
 # Example inefficient code section
 result = []
 for i in range(len(data)):
@@ -247,7 +247,7 @@ for i in range(len(data)):
 ```
 
 **Suggested Optimization:**
-```{language}
+```python
 # Use list comprehension instead
 result = [item * 2 for item in data]
 ```
@@ -259,14 +259,14 @@ result = [item * 2 for item in data]
 ### 1. Unnecessary Data Duplication
 
 **Original Code:**
-```{language}
+```python
 # Creating duplicate data
 full_data = original_data.copy()
 processed = process_data(full_data)
 ```
 
 **Suggested Optimization:**
-```{language}
+```python
 # Process data in-place when possible
 processed = process_data(original_data)
 ```
@@ -278,13 +278,13 @@ processed = process_data(original_data)
 ### 1. Complex Conditional Logic
 
 **Original Code:**
-```{language}
+```python
 if condition1 and condition2 and (condition3 or (condition4 and condition5)):
     # Complex nested logic
 ```
 
 **Suggested Optimization:**
-```{language}
+```python
 # Break down complex conditions
 if condition1 and condition2:
     if condition3 or (condition4 and condition5):
