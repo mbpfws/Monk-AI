@@ -29,7 +29,7 @@ npm install
 
 #### OpenAI API
 - **Status**: Pre-configured
-- **API Key**: `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`
+- **API Key**: `your-openai-api-key-here`
 - **Base URL**: `https://api.openai.com/v1`
 - **Model**: `gpt-4`
 

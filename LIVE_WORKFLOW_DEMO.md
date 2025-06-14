@@ -39,7 +39,7 @@ This is a comprehensive demonstration of the **Monk-AI TraeDevMate** system show
 
 Ensure your `.env` file contains:
 ```bash
-OPENAI_API_KEY=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
+OPENAI_API_KEY=your-openai-api-key-here
 ```
 
 ### Running the Demo

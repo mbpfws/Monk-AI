@@ -49,7 +49,7 @@ class AIProviderManager:
     def __init__(self):
         self.providers = {
             'openai': {
-                'api_key': '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',
+                'api_key': 'your-openai-api-key-here',
                 'base_url': 'https://api.openai.com/v1',
                 'model': 'gpt-4'
             },
@@ -215,7 +215,7 @@ async function fetchUserData(userId) {
 class ShoppingCart {
     constructor() {
         this.items = [];
-        this.apiKey = "sk-1234567890"; // Security issue: exposed API key
+        this.apiKey = "your-api-key-here"; // Remember to set your actual API key
     }
     
     addItem(item) {

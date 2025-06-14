@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(__file__))
 
 # Set environment variable if not already set
 if not os.getenv('OPENAI_API_KEY'):
-    os.environ['OPENAI_API_KEY'] = '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'
+    os.environ['OPENAI_API_KEY'] = 'your-openai-api-key-here'
 
 async def test_ai_integration():
     """Test the AI integration is working"""
