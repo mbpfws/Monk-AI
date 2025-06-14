@@ -179,6 +179,33 @@ class TestGenerator:
         for pattern in test_patterns:
             existing_tests += len(re.findall(pattern, code, re.IGNORECASE))
         
+        if unit_test_content:
+            # Extract individual test functions
+            test_function_pattern = r"```\w*\s*def\s+(test_[\w_]+)\s*\(([^)]*)\):[\s\S]*?```"
+            test_matches = re.finditer(test_function_pattern, unit_test_content)
+            
+            for match in test_matches:
+                test_name = match.group(1).strip()
+                test_params = match.group(2).strip()
+                test_code = match.group(0).strip()
+                
+                # Try to extract the test description from comments
+                description_match = re.search(r'"""([\s\S]*?)"""|\'\'\'([\s\S]*?)\'\'\'|#\s*(.*)', test_code)
+                description = ""
+                if description_match:
+                    if description_match.group(1):
+                        description = description_match.group(1).strip()
+                    elif description_match.group(2):
+                        description = description_match.group(2).strip()
+                    elif description_match.group(3):
+                        description = description_match.group(3).strip()
+                
+                unit_tests.append({
+                    "name": test_name,
+                    "code": test_code,
+                    "description": description,
+                    "function_under_test": self._extract_function_under_test(test_name, test_code)
+                })
         has_mocks = bool(re.search(r'mock|stub|fake|spy', code, re.IGNORECASE))
         has_fixtures = bool(re.search(r'fixture|setup|teardown', code, re.IGNORECASE))
         has_assertions = bool(re.search(r'assert|expect|should', code, re.IGNORECASE))
@@ -203,6 +230,33 @@ class TestGenerator:
         coverage_score = coverage_analysis["estimated_overall_coverage"]
         test_diversity_score = min(100, (unit_test_count * 2 + integration_test_count * 3 + edge_case_count * 4))
         
+        if integration_test_content:
+            # Extract individual test functions
+            test_function_pattern = r"```\w*\s*def\s+(test_[\w_]+)\s*\(([^)]*)\):[\s\S]*?```"
+            test_matches = re.finditer(test_function_pattern, integration_test_content)
+            
+            for match in test_matches:
+                test_name = match.group(1).strip()
+                test_params = match.group(2).strip()
+                test_code = match.group(0).strip()
+                
+                # Try to extract the test description from comments
+                description_match = re.search(r'"""([\s\S]*?)"""|\'\'\'([\s\S]*?)\'\'\'|#\s*(.*)', test_code)
+                description = ""
+                if description_match:
+                    if description_match.group(1):
+                        description = description_match.group(1).strip()
+                    elif description_match.group(2):
+                        description = description_match.group(2).strip()
+                    elif description_match.group(3):
+                        description = description_match.group(3).strip()
+                
+                integration_tests.append({
+                    "name": test_name,
+                    "code": test_code,
+                    "description": description,
+                    "components_tested": self._extract_components_tested(test_code)
+                })
         quality_score = (coverage_score * 0.6 + test_diversity_score * 0.4)
         
         # Determine quality grade
@@ -226,6 +280,50 @@ class TestGenerator:
         if edge_case_count < 3:
             priority_tests.append("Implement edge case testing for input validation")
         
+        if edge_case_content:
+            # Extract individual test functions
+            test_function_pattern = r"```\w*\s*def\s+(test_[\w_]+)\s*\(([^)]*)\):[\s\S]*?```"
+            test_matches = re.finditer(test_function_pattern, edge_case_content)
+            
+            for match in test_matches:
+                test_name = match.group(1).strip()
+                test_params = match.group(2).strip()
+                test_code = match.group(0).strip()
+                
+                # Try to extract the test description from comments
+                description_match = re.search(r'"""([\s\S]*?)"""|\'\'\'([\s\S]*?)\'\'\'|#\s*(.*)', test_code)
+                description = ""
+                if description_match:
+                    if description_match.group(1):
+                        description = description_match.group(1).strip()
+                    elif description_match.group(2):
+                        description = description_match.group(2).strip()
+                    elif description_match.group(3):
+                        description = description_match.group(3).strip()
+                
+                # Try to identify the edge case being tested
+                edge_case_type = ""
+                if "null" in test_name.lower() or "none" in test_name.lower():
+                    edge_case_type = "null_input"
+                elif "empty" in test_name.lower():
+                    edge_case_type = "empty_input"
+                elif "invalid" in test_name.lower():
+                    edge_case_type = "invalid_input"
+                elif "boundary" in test_name.lower() or "limit" in test_name.lower():
+                    edge_case_type = "boundary_value"
+                elif "exception" in test_name.lower() or "error" in test_name.lower():
+                    edge_case_type = "exception_handling"
+                else:
+                    edge_case_type = "other"
+                
+                edge_cases.append({
+                    "name": test_name,
+                    "code": test_code,
+                    "description": description,
+                    "edge_case_type": edge_case_type
+                })
+        
+        return edge_cases
         return {
             "overall_quality_score": round(quality_score, 1),
             "quality_grade": grade,
