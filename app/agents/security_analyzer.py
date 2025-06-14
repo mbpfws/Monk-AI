@@ -475,7 +475,7 @@ database.users.insert(new_user)
 
 **Vulnerable Code (Line 112):**
 ```{language}
-logger.info(f"User {username} authenticated with password {password}")
+logger.info(f"User {{username}} authenticated successfully")
 ```
 
 **Severity:** High
@@ -488,7 +488,7 @@ logger.info(f"User {username} authenticated with password {password}")
 
 **Secure Code Example:**
 ```{language}
-logger.info(f"User {username} authenticated successfully")
+logger.info(f"User {{username}} authenticated successfully")
 ``}
 """
         
