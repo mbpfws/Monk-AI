@@ -35,7 +35,7 @@ async def test_complete_data_flow():
         client = openai.AsyncOpenAI(api_key=api_key)
         
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4oo-mini",
             messages=[{"role": "user", "content": "Generate a project name for a task management app. Return only the name."}],
             max_tokens=20,
             temperature=0.3
@@ -104,7 +104,7 @@ async def test_complete_data_flow():
                             print(f"   • API Response Time: ~{response.headers.get('X-Process-Time', 'N/A')}")
                             print(f"   • Data Size: {len(str(data))} characters")
                             print(f"   • AI Provider: OpenAI")
-                            print(f"   • Model: gpt-4o-mini")
+                            print(f"   • Model: gpt-4oo-mini")
                             
                             return True
                         else:

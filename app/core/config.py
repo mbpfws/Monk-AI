@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     
     # AI Model Settings (Legacy)
     AI_API_KEY: str = os.getenv("AI_API_KEY", "")
-    AI_MODEL: str = os.getenv("AI_MODEL", "gpt-4")
+    AI_MODEL: str = os.getenv("AI_MODEL", "gpt-4o")
     AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", "0.7"))
     AI_MAX_TOKENS: int = int(os.getenv("AI_MAX_TOKENS", "1000"))
     

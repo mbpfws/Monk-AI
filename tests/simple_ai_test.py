@@ -29,7 +29,7 @@ async def test_openai_direct():
         client = openai.AsyncOpenAI(api_key=api_key)
         
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4oo-mini",
             messages=[
                 {"role": "user", "content": "Hello! Please respond with 'OpenAI API is working correctly' to confirm the connection."}
             ],
@@ -70,7 +70,7 @@ Please respond with a JSON object containing:
 Keep the response concise and practical."""
 
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4oo-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=800,
             temperature=0.7
@@ -118,7 +118,7 @@ Include:
 Keep it concise and functional."""
 
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4oo-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=600,
             temperature=0.3

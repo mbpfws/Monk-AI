@@ -59,7 +59,7 @@ class Ideation:
         try:
             ai_response = self.ai_service.generate_response(
                 prompt=prompt,
-                model="gpt-4o-mini",
+                model="gpt-4oo-mini",
                 temperature=0.7,
                 max_tokens=2000
             )
@@ -114,7 +114,7 @@ class Ideation:
         try:
             ai_response = await self.ai_service.generate_response(
                 prompt=prompt,
-                model="gpt-4o-mini",
+                model="gpt-4oo-mini",
                 temperature=0.7,
                 max_tokens=3000
             )
@@ -171,7 +171,7 @@ class Ideation:
         try:
             ai_response = await self.ai_service.generate_response(
                 prompt=prompt,
-                model="gpt-4o-mini",
+                model="gpt-4oo-mini",
                 temperature=0.7,
                 max_tokens=6000
             )

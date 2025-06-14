@@ -47,7 +47,7 @@ class MultiProviderAIService:
         if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY != "your_openai_key_here":
             self.providers[AIProvider.OPENAI] = {
                 "client": openai.AsyncOpenAI(api_key=settings.OPENAI_API_KEY),
-                "models": ["gpt-4o", "gpt-4o-mini", "gpt-3.5-turbo"],
+                "models": ["gpt-4oo", "gpt-4oo-mini", "gpt-3.5-turbo"],
                 "available": True
             }
             logger.info("✅ OpenAI client initialized")
@@ -69,7 +69,7 @@ class MultiProviderAIService:
                     base_url="https://openrouter.ai/api/v1",
                     api_key=settings.OPENROUTER_API_KEY
                 ),
-                "models": ["openai/gpt-4o", "anthropic/claude-3-sonnet", "google/gemini-pro"],
+                "models": ["openai/gpt-4oo", "anthropic/claude-3-sonnet", "google/gemini-pro"],
                 "available": True
             }
             logger.info("✅ OpenRouter client initialized")
