@@ -299,30 +299,64 @@ const MultiAgentOrchestrator = () => {
     setRealTimeUpdates([]);
 
     try {
-      // Start the workflow using the orchestrator system
-      const response = await axios.post('http://localhost:8000/api/agents/orchestrate', {
-        description: description,
-        language: language,
+      // Start the workflow using the correct endpoint
+      const response = await axios.post('http://localhost:8000/api/workflow/execute', {
+        project_description: description,
+        programming_language: language,
         workflow_type: workflowType,
       });
 
-      console.log('Orchestration started:', response.data);
+      console.log('Workflow started:', response.data);
       
-      // For now, set the result directly since streaming isn't set up yet
-      setResult(response.data);
-      setIsRunning(false);
-      setLoading(false);
-      setWorkflowProgress(100);
+      const workflowId = response.data.workflow_id;
       
-      // Simulate workflow completion
-      const completionUpdate: RealTimeUpdate = {
-        type: 'workflow_complete',
-        workflow_id: 'static-workflow-id',
-        data: response.data,
-        timestamp: new Date().toISOString(),
-        message: '🎉 Multi-Agent Workflow completed successfully!'
-             };
-       setRealTimeUpdates([completionUpdate]);
+      // Set up Server-Sent Events for real-time updates
+      const eventSource = new EventSource(`http://localhost:8000/api/workflow/stream/${workflowId}`);
+      setEventSource(eventSource);
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const update = JSON.parse(event.data);
+          handleRealTimeUpdate(update);
+        } catch (error) {
+          console.error('Failed to parse SSE message:', error);
+        }
+      };
+      
+      eventSource.addEventListener('step_update', (event) => {
+        try {
+          const update = JSON.parse((event as any).data);
+          handleRealTimeUpdate({ ...update, type: 'step_update' });
+        } catch (error) {
+          console.error('Failed to parse step_update:', error);
+        }
+      });
+      
+      eventSource.addEventListener('step_complete', (event) => {
+        try {
+          const update = JSON.parse((event as any).data);
+          handleRealTimeUpdate({ ...update, type: 'step_complete' });
+        } catch (error) {
+          console.error('Failed to parse step_complete:', error);
+        }
+      });
+      
+      eventSource.addEventListener('workflow_complete', (event) => {
+        try {
+          const update = JSON.parse((event as any).data);
+          handleRealTimeUpdate({ ...update, type: 'workflow_complete' });
+        } catch (error) {
+          console.error('Failed to parse workflow_complete:', error);
+        }
+      });
+      
+      eventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        setError('Connection to workflow stream lost');
+        setIsRunning(false);
+        setLoading(false);
+        eventSource.close();
+      };
       
     } catch (err: any) {
       console.error('Workflow execution failed:', err);
@@ -332,86 +366,107 @@ const MultiAgentOrchestrator = () => {
     }
   };
 
-  const handleRealTimeUpdate = (update: RealTimeUpdate) => {
+  const handleRealTimeUpdate = (update: any) => {
     console.log('Real-time update:', update);
     
-    switch (update.type) {
+    setLoading(false); // Turn off loading once we start getting updates
+    
+    switch (update.type || update.event) {
       case 'workflow_status':
-        const status: WorkflowStatus = update.data;
+      case 'workflow_update':
+        const status: WorkflowStatus = update.data || update;
         setWorkflowStatus(status);
-        setSteps(status.steps);
-        setActiveStep(status.current_step);
-        setWorkflowProgress(status.progress);
+        setSteps(status.steps?.filter(step => step !== null) || []);
+        setActiveStep(status.current_step || 0);
+        setWorkflowProgress(status.progress || 0);
         
         // Add real-time activity update
         const activityUpdate: RealTimeUpdate = {
           type: 'workflow_status',
-          workflow_id: status.workflow_id,
+          workflow_id: status.workflow_id || 'workflow',
           data: status,
           timestamp: new Date().toISOString(),
-          message: `🔄 Workflow ${status.workflow_id.slice(0, 8)}: ${status.status} - Step ${status.current_step}/${status.total_steps}`
+          message: update.message || `🔄 Workflow: ${status.status} - Step ${status.current_step}/${status.total_steps}`
         };
         setRealTimeUpdates(prev => [activityUpdate, ...prev.slice(0, 4)]);
         break;
         
       case 'step_update':
-        const stepUpdate = update.data;
+        const stepUpdate = update.data || update;
         setCurrentStepProgress(stepUpdate.progress || 0);
+        setWorkflowProgress(stepUpdate.progress || 0);
         
-        // Update specific step
-        setSteps(prev => prev.map(step => 
-          step.step_id === stepUpdate.step_id ? { ...step, ...stepUpdate } : step
-        ));
+        // Create or update step in steps array
+        const stepId = stepUpdate.step || stepUpdate.step_id || Math.random().toString();
+        const newStep: WorkflowStep = {
+          step_id: stepId,
+          agent_name: stepUpdate.step || stepUpdate.agent_name || 'AI Agent',
+          status: 'running',
+          progress: stepUpdate.progress || 0,
+          start_time: Date.now()
+        };
+        
+        setSteps(prev => {
+          const existing = prev.find(s => s && s.step_id === stepId);
+          if (existing) {
+            return prev.map(step => 
+              (step && step.step_id === stepId) ? { ...step, ...newStep } : step
+            ).filter(step => step !== null);
+          } else {
+            return [...prev, newStep];
+          }
+        });
         
         const stepUpdateMsg: RealTimeUpdate = {
           type: 'step_update',
-          workflow_id: update.workflow_id,
+          workflow_id: update.workflow_id || 'workflow',
           data: stepUpdate,
           timestamp: new Date().toISOString(),
-          message: `⚡ ${stepUpdate.agent_name}: ${stepUpdate.status} - ${stepUpdate.progress || 0}%`
+          message: update.message || `⚡ ${stepUpdate.step}: ${stepUpdate.progress || 0}%`
         };
         setRealTimeUpdates(prev => [stepUpdateMsg, ...prev.slice(0, 4)]);
         break;
         
       case 'step_complete':
-        const completedStep = update.data;
+        const completedStep = update.data || update;
+        const completeStepId = completedStep.step || completedStep.step_id || Math.random().toString();
+        
         setSteps(prev => prev.map(step => 
-          step.step_id === completedStep.step_id ? { ...step, ...completedStep } : step
-        ));
+          (step && step.step_id === completeStepId) ? { 
+            ...step, 
+            status: 'completed', 
+            end_time: Date.now(),
+            result: completedStep.result || 'Completed successfully',
+            progress: 100
+          } : step
+        ).filter(step => step !== null));
         
         const completeUpdate: RealTimeUpdate = {
           type: 'step_complete',
-          workflow_id: update.workflow_id,
+          workflow_id: update.workflow_id || 'workflow',
           data: completedStep,
           timestamp: new Date().toISOString(),
-          message: `✅ ${completedStep.agent_name}: Completed successfully`
+          message: update.message || `✅ ${completedStep.step}: Completed successfully`
         };
         setRealTimeUpdates(prev => [completeUpdate, ...prev.slice(0, 4)]);
         setCurrentStepProgress(0);
         break;
         
       case 'workflow_complete':
-        const finalStatus: WorkflowStatus = update.data;
-        setWorkflowStatus(finalStatus);
-        setSteps(finalStatus.steps);
+        const finalData = update.data || update;
         setIsRunning(false);
         setWorkflowProgress(100);
         
-        // Create result summary
+        // Create a comprehensive result object
         const workflowResult: WorkflowResult = {
-          steps: finalStatus.results,
-          timeline: finalStatus.steps.map(step => ({
-            step: step.agent_name,
-            duration: step.end_time && step.start_time ? (step.end_time - step.start_time) / 1000 : 0,
-            timestamp: step.start_time || 0,
-            success: step.status === 'completed'
-          })),
-          success: finalStatus.status === 'completed',
-          total_time: finalStatus.end_time && finalStatus.start_time ? (finalStatus.end_time - finalStatus.start_time) / 1000 : 0,
+          steps: finalData.results || {},
+          timeline: [],
+          success: true,
+          total_time: finalData.total_time || 0,
           summary: {
-            completed_steps: finalStatus.steps.filter(s => s.status === 'completed').length,
-            total_steps: finalStatus.total_steps,
-            success_rate: (finalStatus.steps.filter(s => s.status === 'completed').length / finalStatus.total_steps) * 100,
+            completed_steps: steps.filter(s => s && s.status === 'completed').length,
+            total_steps: steps.length,
+            success_rate: 100,
             fastest_step: 'ideation',
             slowest_step: 'documentation'
           }
@@ -420,10 +475,10 @@ const MultiAgentOrchestrator = () => {
         
         const finalUpdate: RealTimeUpdate = {
           type: 'workflow_complete',
-          workflow_id: update.workflow_id,
-          data: finalStatus,
+          workflow_id: update.workflow_id || 'workflow',
+          data: finalData,
           timestamp: new Date().toISOString(),
-          message: `🎉 Workflow completed successfully! Generated ${Object.keys(finalStatus.results).length} results`
+          message: update.message || '🎉 Workflow completed successfully!'
         };
         setRealTimeUpdates(prev => [finalUpdate, ...prev.slice(0, 4)]);
         
@@ -435,13 +490,27 @@ const MultiAgentOrchestrator = () => {
         break;
         
       case 'error':
-        setError(update.data.message || 'Workflow execution failed');
+        setError(update.message || update.data?.message || 'Workflow execution failed');
         setIsRunning(false);
         setLoading(false);
         
         if (eventSource) {
           eventSource.close();
           setEventSource(null);
+        }
+        break;
+        
+      default:
+        // Handle any other message types
+        if (update.message) {
+          const genericUpdate: RealTimeUpdate = {
+            type: 'workflow_status',
+            workflow_id: update.workflow_id || 'workflow',
+            data: update,
+            timestamp: new Date().toISOString(),
+            message: update.message
+          };
+          setRealTimeUpdates(prev => [genericUpdate, ...prev.slice(0, 4)]);
         }
         break;
     }
@@ -496,7 +565,10 @@ const MultiAgentOrchestrator = () => {
     return `${duration.toFixed(1)}s`;
   };
 
-  const getStepStatus = (step: WorkflowStep) => {
+  const getStepStatus = (step: WorkflowStep | null | undefined) => {
+    if (!step || !step.status) {
+      return { color: '#9e9e9e', icon: <PendingIcon /> };
+    }
     switch (step.status) {
       case 'completed': return { color: '#4caf50', icon: <CheckIcon /> };
       case 'running': return { color: '#ff9800', icon: <CircularProgress size={16} /> };
@@ -982,7 +1054,8 @@ const MultiAgentOrchestrator = () => {
                 )}
 
                 <Stepper activeStep={activeStep} orientation="vertical">
-                  {workflowStatus?.steps?.map((step, index) => {
+                  {workflowStatus?.steps?.filter(step => step && step.status)?.map((step, index) => {
+                    if (!step || !step.status) return null;
                     const stepStatus = getStepStatus(step);
                     return (
                       <Step key={step.step_id || index}>

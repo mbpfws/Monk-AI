@@ -51,7 +51,7 @@ class AIProviderManager:
             'openai': {
                 'api_key': 'your-openai-api-key-here',
                 'base_url': 'https://api.openai.com/v1',
-                'model': 'gpt-4'
+                'model': 'gpt-4o'
             },
             'gemini': {
                 'api_key': None,  # To be set by user

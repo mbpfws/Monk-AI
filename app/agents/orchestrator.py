@@ -337,7 +337,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import uvicorn
 from datetime import datetime, timedelta
-import jwt
+from jose import jwt
 import hashlib
 import asyncio
 from contextlib import asynccontextmanager
@@ -1447,4 +1447,4 @@ async def create_task(task: TaskModel):
                 "Security score: 95/100",
                 "Test coverage: 94%"
             ]
-        } 
+        }
