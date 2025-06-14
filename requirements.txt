@@ -9,4 +9,10 @@ python-jose==3.3.0
 passlib==1.7.4
 python-multipart==0.0.6
 sqlalchemy==2.0.23
-aiohttp==3.9.1 
+aiohttp==3.9.1
+bcrypt==4.0.1
+alembic==1.12.0
+tenacity==8.2.2
+httpx==0.24.1
+pydantic-settings==2.0.3
+redis==4.6.0 
