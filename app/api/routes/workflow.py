@@ -653,7 +653,13 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
                 # Update context with results
                 context.update(result)
                 
-                # Send step completion
+                # Extract AI service status if available
+                ai_status = result.get("ai_status", {})
+                provider_info = ""
+                if ai_status.get("provider"):
+                    provider_info = f" (Provider: {ai_status['provider']}, Priority: {ai_status.get('provider_priority', 'N/A')})"
+                
+                # Send step completion with AI status
                 yield create_sse_message("step_complete", {
                     "workflow_id": workflow_id,
                     "step_id": step_id,
@@ -662,7 +668,8 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
                     "progress": 100,
                     "result": result,
                     "duration": 2,
-                    "message": f"✅ {step_name}: Completed successfully"
+                    "ai_status": ai_status,
+                    "message": f"✅ {step_name}: Completed successfully{provider_info}"
                 })
                 
                 await asyncio.sleep(0.5)
@@ -676,6 +683,7 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
                     "status": "failed",
                     "progress": 100,
                     "error": str(e),
+                    "ai_status": {"status": "error", "error": str(e)},
                     "message": f"❌ {step_name}: Failed - {str(e)}"
                 })
                 

@@ -91,7 +91,7 @@ class AIProviderManager:
             client = genai.Client(api_key=self.providers['gemini']['api_key'])
             # Test basic connection
             response = client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-2.0-flash',
                 contents='Hello, test connection'
             )
             return True

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional, List
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -37,4 +37,8 @@ class UserRepository(BaseRepository[User]):
         db.add(user)
         db.commit()
         db.refresh(user)
-        return user 
+        return user
+
+
+# Create instance for use in other modules
+user_crud = UserRepository()

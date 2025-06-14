@@ -55,22 +55,27 @@ class Ideation:
         
         # Use AI service to generate project scope
         try:
-            ai_response = self.ai_service.generate_response(
+            ai_result = await self.ai_service.generate_ai_response(
                 prompt=prompt,
                 model="gpt-4o-mini",
                 temperature=0.7,
                 max_tokens=2000
             )
             
+            if not ai_result["success"]:
+                raise Exception(f"AI generation failed: {ai_result['error']}")
+            
+            ai_response = ai_result["response"]
+            
             # Extract the actual response content
-            response_content = ai_response.get("response", "") if isinstance(ai_response, dict) else str(ai_response)
+            response_content = str(ai_response)
             
             # Try to parse JSON response
             try:
-                return json.loads(response_content)
+                project_data = json.loads(response_content)
             except json.JSONDecodeError:
                 # If not valid JSON, wrap in a basic structure
-                return {
+                project_data = {
                     "project_name": f"Generated Project for {description[:50]}...",
                     "description": response_content,
                     "objectives": ["Generated from AI response"],
@@ -79,9 +84,31 @@ class Ideation:
                     "success_metrics": ["To be defined"],
                     "resources_needed": ["To be defined"]
                 }
+            
+            # Add AI status information
+            project_data["ai_status"] = {
+                "provider": ai_result["provider"],
+                "model": ai_result["model"],
+                "status": ai_result["status"],
+                "provider_priority": ai_result["provider_priority"],
+                "total_providers": ai_result["total_providers"],
+                "timestamp": ai_result["timestamp"]
+            }
+            
+            return project_data
+            
         except Exception as e:
             # Fallback to mock data if AI service fails
-            return self._get_mock_project_scope(description, template_key)
+            mock_data = self._get_mock_project_scope(description, template_key)
+            mock_data["ai_status"] = {
+                "provider": "fallback",
+                "model": "mock",
+                "status": "fallback_used",
+                "error": str(e),
+                "provider_priority": 0,
+                "total_providers": 0
+            }
+            return mock_data
     
     async def generate_technical_specs(self, project_scope: Dict[str, Any]) -> Dict[str, Any]:
         """Generate technical specifications based on project scope.

@@ -44,7 +44,7 @@ import {
 import {
   PlayArrow,
   CheckCircle,
-  Error,
+  Error as ErrorIcon,
   ExpandMore,
   AutoAwesome,
   Speed,
@@ -62,6 +62,7 @@ import {
   Download,
   Warning,
   Refresh,
+  Delete,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -166,6 +167,15 @@ interface WorkflowStep {
   start_time?: number;
   end_time?: number;
   progress?: number;
+  ai_status?: {
+    provider: string;
+    model: string;
+    status: string;
+    provider_priority: number;
+    total_providers: number;
+    timestamp: string;
+    error?: string;
+  };
 }
 
 interface WorkflowStatus {
@@ -261,6 +271,22 @@ const MultiAgentOrchestrator = () => {
   const [showResultsDialog, setShowResultsDialog] = useState(false);
   const [selectedResult, setSelectedResult] = useState<any>(null);
   const [workflowId, setWorkflowId] = useState<string | null>(null);
+
+  // Debug functionality state
+  const [debugMode, setDebugMode] = useState(false);
+  const [rawJsonOutputs, setRawJsonOutputs] = useState<Record<string, any>>({});
+  const [aiProviderResponses, setAiProviderResponses] = useState<Array<{
+    id: string;
+    timestamp: string;
+    provider: string;
+    model: string;
+    prompt: string;
+    response: any;
+    success: boolean;
+    error?: string;
+  }>>([]);
+  const [showDebugDialog, setShowDebugDialog] = useState(false);
+  const [selectedDebugResponse, setSelectedDebugResponse] = useState<any>(null);
 
   // Debounced update handler to prevent performance violations
   const debouncedUpdateHandler = useMemo(
@@ -381,6 +407,39 @@ const MultiAgentOrchestrator = () => {
     console.log('Real-time update:', update);
     
     setLoading(false);
+    
+    // Debug Mode: Capture all raw JSON outputs
+    if (debugMode && update) {
+      const debugEntry = {
+        id: `debug_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: new Date().toISOString(),
+        type: update.type || update.event || 'unknown',
+        rawData: JSON.parse(JSON.stringify(update)), // Deep clone
+        workflow_id: update.workflow_id || workflowId || 'unknown'
+      };
+      
+      setRawJsonOutputs(prev => ({
+        ...prev,
+        [debugEntry.id]: debugEntry
+      }));
+
+      // If this update contains AI provider response data, capture it
+      if (update.ai_response || (update.data && update.data.ai_response)) {
+        const aiResponse = update.ai_response || update.data.ai_response;
+        const aiDebugEntry = {
+          id: debugEntry.id,
+          timestamp: debugEntry.timestamp,
+          provider: aiResponse.provider || 'unknown',
+          model: aiResponse.model || 'unknown',
+          prompt: aiResponse.prompt || 'N/A',
+          response: aiResponse.response || aiResponse,
+          success: aiResponse.success !== false,
+          error: aiResponse.error || null
+        };
+        
+        setAiProviderResponses(prev => [aiDebugEntry, ...prev.slice(0, 49)]); // Keep last 50
+      }
+    }
     
     // Ensure update has proper structure and prevent undefined displays
     if (!update || typeof update !== 'object') {
@@ -508,7 +567,8 @@ const MultiAgentOrchestrator = () => {
             status: 'completed' as const, 
             end_time: Date.now(),
             result: completedStep.result || 'Completed successfully',
-            progress: 100
+            progress: 100,
+            ai_status: completedStep.ai_status || null
           } : step
         ).filter(step => step !== null));
         
@@ -788,7 +848,7 @@ const MultiAgentOrchestrator = () => {
     switch (step.status) {
       case 'completed': return { color: '#4caf50', icon: <CheckCircle /> };
       case 'running': return { color: '#ff9800', icon: <CircularProgress size={16} /> };
-      case 'failed': return { color: '#f44336', icon: <Error /> };
+      case 'failed': return { color: '#f44336', icon: <ErrorIcon /> };
       default: return { color: '#9e9e9e', icon: <Pending /> };
     }
   };
@@ -987,6 +1047,292 @@ const MultiAgentOrchestrator = () => {
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setShowResultsDialog(false)}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  // Debug helper functions
+  const parseOutputToContainer = (debugEntry: any) => {
+    try {
+      // Extract meaningful data for the frontend container
+      const parsedData = {
+        timestamp: debugEntry.timestamp,
+        type: debugEntry.type,
+        data: debugEntry.rawData,
+        // Try to extract AI response details
+        aiProvider: debugEntry.rawData?.ai_response?.provider || 'unknown',
+        aiModel: debugEntry.rawData?.ai_response?.model || 'unknown',
+        success: debugEntry.rawData?.ai_response?.success || true,
+      };
+
+      // Update the current workflow with parsed data
+      if (debugEntry.rawData?.data) {
+        // Process step results
+        if (debugEntry.type === 'step_complete' && debugEntry.rawData.data.result) {
+          const result = debugEntry.rawData.data.result;
+          
+          // Extract code files
+          if (result.generated_files || result.files) {
+            setGeneratedCode(prev => ({ 
+              ...prev, 
+              ...result.generated_files,
+              ...result.files 
+            }));
+          }
+          
+          // Extract documentation
+          if (result.documentation) {
+            setDocumentation(result.documentation);
+          }
+        }
+      }
+
+      // Show success message
+      console.log('✅ Parsed debug output to frontend container:', parsedData);
+      return parsedData;
+    } catch (error) {
+      console.error('❌ Failed to parse debug output:', error);
+      return null;
+    }
+  };
+
+  const viewDebugResponse = (response: any) => {
+    setSelectedDebugResponse(response);
+    setShowDebugDialog(true);
+  };
+
+  const clearDebugData = () => {
+    setRawJsonOutputs({});
+    setAiProviderResponses([]);
+  };
+
+  // Debug Toggle Card Component
+  const renderDebugToggleCard = () => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.3 }}
+    >
+      <Paper sx={{ p: 3, mb: 4, bgcolor: 'rgba(255, 165, 0, 0.05)', border: '1px solid rgba(255, 165, 0, 0.2)' }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <BugReport color="warning" />
+          Debug Mode - Raw JSON Output Viewer
+        </Typography>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={debugMode}
+                onChange={(e) => setDebugMode(e.target.checked)}
+                color="warning"
+              />
+            }
+            label="Enable Debug Mode"
+          />
+          
+          <Chip 
+            label={`${Object.keys(rawJsonOutputs).length} Captured Outputs`}
+            color={debugMode ? "warning" : "default"}
+            variant="outlined"
+          />
+          
+          <Chip 
+            label={`${aiProviderResponses.length} AI Responses`}
+            color={debugMode ? "success" : "default"}
+            variant="outlined"
+          />
+          
+          <Button
+            size="small"
+            onClick={clearDebugData}
+            disabled={Object.keys(rawJsonOutputs).length === 0}
+            startIcon={<Delete />}
+          >
+            Clear Debug Data
+          </Button>
+        </Box>
+
+        {debugMode && (
+          <Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Debug mode captures all raw JSON outputs from AI providers and workflow events.
+              Use this to verify schema definitions match Google Gemini outputs.
+            </Typography>
+            
+            {Object.keys(rawJsonOutputs).length > 0 && (
+              <Paper sx={{ p: 2, bgcolor: 'rgba(0,0,0,0.02)', mb: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  📋 Recent Debug Outputs:
+                </Typography>
+                <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
+                  {Object.entries(rawJsonOutputs).slice(-10).map(([id, entry]) => (
+                    <Box key={id} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip 
+                        label={entry.type}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <Typography variant="caption" sx={{ flex: 1 }}>
+                        {entry.timestamp}
+                      </Typography>
+                      <Button
+                        size="small"
+                        onClick={() => parseOutputToContainer(entry)}
+                        startIcon={<PlayArrow />}
+                      >
+                        Parse to Container
+                      </Button>
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          setSelectedDebugResponse(entry);
+                          setShowDebugDialog(true);
+                        }}
+                        startIcon={<Visibility />}
+                      >
+                        View JSON
+                      </Button>
+                    </Box>
+                  ))}
+                </Box>
+              </Paper>
+            )}
+
+            {aiProviderResponses.length > 0 && (
+              <Paper sx={{ p: 2, bgcolor: 'rgba(0,128,0,0.02)' }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  🤖 AI Provider Responses:
+                </Typography>
+                <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
+                  {aiProviderResponses.slice(0, 5).map((response) => (
+                    <Box key={response.id} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Chip 
+                        label={response.provider}
+                        size="small"
+                        color={response.success ? "success" : "error"}
+                        variant="outlined"
+                      />
+                      <Chip 
+                        label={response.model}
+                        size="small"
+                        color="info"
+                        variant="outlined"
+                      />
+                      <Typography variant="caption" sx={{ flex: 1 }}>
+                        {response.timestamp}
+                      </Typography>
+                      <Button
+                        size="small"
+                        onClick={() => viewDebugResponse(response)}
+                        startIcon={<Code />}
+                      >
+                        View Response
+                      </Button>
+                    </Box>
+                  ))}
+                </Box>
+              </Paper>
+            )}
+          </Box>
+        )}
+      </Paper>
+    </motion.div>
+  );
+
+  // Debug Dialog Component
+  const renderDebugDialog = () => (
+    <Dialog
+      open={showDebugDialog}
+      onClose={() => setShowDebugDialog(false)}
+      maxWidth="lg"
+      fullWidth
+    >
+      <DialogTitle>
+        🔍 Debug Output Viewer
+        {selectedDebugResponse && (
+          <Typography variant="subtitle2" color="text.secondary">
+            {selectedDebugResponse.provider ? 
+              `AI Provider: ${selectedDebugResponse.provider} (${selectedDebugResponse.model})` :
+              `Event Type: ${selectedDebugResponse.type}`
+            }
+          </Typography>
+        )}
+      </DialogTitle>
+      <DialogContent>
+        {selectedDebugResponse && (
+          <Box>
+            <Tabs value={0}>
+              <Tab label="Formatted JSON" />
+              <Tab label="Raw Data" />
+              <Tab label="Schema Analysis" />
+            </Tabs>
+            
+            <Paper sx={{ p: 2, mt: 2, bgcolor: 'grey.50' }}>
+              <Typography variant="h6" gutterBottom>
+                📋 Formatted Output
+              </Typography>
+              <Typography 
+                component="pre" 
+                sx={{ 
+                  whiteSpace: 'pre-wrap', 
+                  fontFamily: 'monospace', 
+                  fontSize: '0.8rem',
+                  maxHeight: 400,
+                  overflow: 'auto',
+                  bgcolor: '#1e1e1e',
+                  color: '#d4d4d4',
+                  p: 2,
+                  borderRadius: 1
+                }}
+              >
+                {JSON.stringify(selectedDebugResponse.rawData || selectedDebugResponse, null, 2)}
+              </Typography>
+            </Paper>
+
+            {selectedDebugResponse.provider && (
+              <Paper sx={{ p: 2, mt: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  🔍 Schema Validation
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle2">Provider:</Typography>
+                    <Chip label={selectedDebugResponse.provider} color="primary" />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle2">Model:</Typography>
+                    <Chip label={selectedDebugResponse.model} color="info" />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle2">Success:</Typography>
+                    <Chip 
+                      label={selectedDebugResponse.success ? "True" : "False"} 
+                      color={selectedDebugResponse.success ? "success" : "error"} 
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle2">Timestamp:</Typography>
+                    <Typography variant="body2">{selectedDebugResponse.timestamp}</Typography>
+                  </Grid>
+                </Grid>
+              </Paper>
+            )}
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setShowDebugDialog(false)}>Close</Button>
+        {selectedDebugResponse && (
+          <Button
+            onClick={() => parseOutputToContainer(selectedDebugResponse)}
+            variant="contained"
+            startIcon={<PlayArrow />}
+          >
+            Parse to Frontend
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
@@ -1294,6 +1640,9 @@ const MultiAgentOrchestrator = () => {
           </motion.div>
         )}
 
+        {/* Debug Toggle Card */}
+        {renderDebugToggleCard()}
+
         <Grid container spacing={4}>
           {/* Left Column - Input Form */}
           <Grid item xs={12} md={6}>
@@ -1542,6 +1891,41 @@ const MultiAgentOrchestrator = () => {
                                   </pre>
                                 </Paper>
                               )}
+                              
+                              {/* AI Status Information */}
+                              {step.ai_status && (
+                                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.1)', borderRadius: 1, border: '1px solid rgba(76, 175, 80, 0.3)' }}>
+                                  <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'success.main', display: 'block', mb: 1 }}>
+                                    🤖 AI Provider Status
+                                  </Typography>
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                    <Chip 
+                                      label={`Provider: ${step.ai_status.provider}`} 
+                                      size="small" 
+                                      color={step.ai_status.status === 'success' ? 'success' : 'warning'}
+                                      variant="outlined"
+                                    />
+                                    <Chip 
+                                      label={`Model: ${step.ai_status.model}`} 
+                                      size="small" 
+                                      variant="outlined"
+                                    />
+                                    <Chip 
+                                      label={`Priority: ${step.ai_status.provider_priority}/${step.ai_status.total_providers}`} 
+                                      size="small" 
+                                      variant="outlined"
+                                    />
+                                    {step.ai_status.error && (
+                                      <Chip 
+                                        label={`Error: ${step.ai_status.error}`} 
+                                        size="small" 
+                                        color="error"
+                                        variant="outlined"
+                                      />
+                                    )}
+                                  </Box>
+                                </Box>
+                              )}
                             </Box>
                           )}
                         </StepContent>
@@ -1560,6 +1944,9 @@ const MultiAgentOrchestrator = () => {
 
             {/* Results Dialog */}
             {renderResultsDialog()}
+
+            {/* Debug Dialog */}
+            {renderDebugDialog()}
           </Grid>
         </Grid>
       </Box>
