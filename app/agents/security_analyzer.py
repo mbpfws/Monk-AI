@@ -376,9 +376,9 @@ class SecurityAnalyzer:
         Include line numbers where possible to help locate the issues.
         
         CODE TO ANALYZE:
-        ```{language}
-        {code}
-        ```
+```{language}
+{code}
+```
         
         Additional context:
         - Lines of code: {static_analysis["lines_analyzed"]}
