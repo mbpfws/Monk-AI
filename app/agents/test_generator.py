@@ -3,15 +3,15 @@ import os
 import re
 import time
 from datetime import datetime
-from openai import OpenAI
-from anthropic import Anthropic
+from typing import Dict, Any, List
+from app.core.ai_service import ai_service
 
 class TestGenerator:
     """Advanced Test Generator with coverage estimation and quality metrics."""
     
     def __init__(self):
-        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        # Use centralized AI service (OpenAI only for hackathon)
+        self.ai_service = ai_service
         
         # Test coverage analysis weights
         self.coverage_weights = {
@@ -337,7 +337,7 @@ class TestGenerator:
         """
         Analyze code to identify testable components and scenarios.
         """
-        # Use Claude for code analysis
+        # Use centralized AI service (OpenAI only for hackathon)
         analysis_prompt = f"""
         Analyze the following {language} code to identify:
         1. Functions and methods that need testing
@@ -350,16 +350,20 @@ class TestGenerator:
         {code}
         """
         
-        response = await self.anthropic_client.messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=1000,
-            messages=[{
-                "role": "user",
-                "content": analysis_prompt
-            }]
-        )
-        
-        return {
-            "analysis": response.content,
-            "raw_code": code
-        }
+        try:
+            response = await self.ai_service.generate_response(
+                prompt=analysis_prompt,
+                max_tokens=1000,
+                temperature=0.3
+            )
+            
+            return {
+                "analysis": response["response"],
+                "raw_code": code
+            }
+        except Exception as e:
+            # Fallback to basic analysis if AI service fails
+            return {
+                "analysis": f"Basic analysis for {language} code with {len(code.splitlines())} lines",
+                "raw_code": code
+            }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -29,28 +29,81 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
+  Tabs,
+  Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Tooltip,
+  Stack,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
-  PlayArrow as PlayIcon,
-  CheckCircle as CheckIcon,
-  Error as ErrorIcon,
-  ExpandMore as ExpandMoreIcon,
-  AutoAwesome as MagicIcon,
-  Speed as SpeedIcon,
-  Security as SecurityIcon,
-  Code as CodeIcon,
-  Description as DocsIcon,
-  Science as ScienceIcon,
-  LightbulbOutlined as IdeaIcon,
-  Stop as StopIcon,
-  Psychology as IdeationIcon,
-  BugReport as TestIcon,
-  RateReview as ReviewIcon,
-  Pending as PendingIcon
+  PlayArrow,
+  CheckCircle,
+  Error,
+  ExpandMore,
+  AutoAwesome,
+  Speed,
+  Security,
+  Code,
+  Description,
+  Science,
+  LightbulbOutlined,
+  Stop,
+  Psychology,
+  BugReport,
+  RateReview,
+  Pending,
+  Visibility,
+  Download,
+  Warning,
+  Refresh,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import CodePreview from '../components/CodePreview';
+
+const API_BASE_URL = 'http://localhost:8000';
+
+// Simple debounce implementation
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+  let timeout: NodeJS.Timeout;
+  return ((...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  }) as T;
+}
+
+// Custom TabPanel component for Material-UI
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function CustomTabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 interface WorkflowResult {
   steps: Record<string, any>;
@@ -141,12 +194,12 @@ interface RealTimeUpdate {
 }
 
 const workflowSteps = [
-  { key: 'ideation', label: 'Ideation & Planning', icon: <IdeaIcon />, color: '#FF6B6B' },
-  { key: 'code_generation', label: 'Code Generation', icon: <CodeIcon />, color: '#4ECDC4' },
-  { key: 'security_analysis', label: 'Security Analysis', icon: <SecurityIcon />, color: '#DDA0DD' },
-  { key: 'test_generation', label: 'Test Generation', icon: <ScienceIcon />, color: '#96CEB4' },
-  { key: 'documentation', label: 'Documentation', icon: <DocsIcon />, color: '#45B7D1' },
-  { key: 'code_review', label: 'Code Review', icon: <CheckIcon />, color: '#FFEAA7' },
+  { key: 'ideation', label: 'Ideation & Planning', icon: <LightbulbOutlined />, color: '#FF6B6B' },
+  { key: 'code_generation', label: 'Code Generation', icon: <Code />, color: '#4ECDC4' },
+  { key: 'security_analysis', label: 'Security Analysis', icon: <Security />, color: '#DDA0DD' },
+  { key: 'test_generation', label: 'Test Generation', icon: <Science />, color: '#96CEB4' },
+  { key: 'documentation', label: 'Documentation', icon: <Description />, color: '#45B7D1' },
+  { key: 'code_review', label: 'Code Review', icon: <CheckCircle />, color: '#FFEAA7' },
 ];
 
 const workflowTypes = [
@@ -157,12 +210,24 @@ const workflowTypes = [
 ];
 
 const languages = [
-  'python', 'javascript', 'typescript', 'java', 'csharp', 'cpp', 'go', 'rust'
+  'none', // For novice users who don't know programming languages
+  'python', 
+  'javascript', 
+  'typescript', 
+  'java', 
+  'csharp', 
+  'cpp', 
+  'go', 
+  'rust',
+  'php',
+  'ruby',
+  'swift',
+  'kotlin'
 ];
 
 const MultiAgentOrchestrator = () => {
   const [description, setDescription] = useState('');
-  const [language, setLanguage] = useState('python');
+  const [language, setLanguage] = useState('none');
   const [workflowType, setWorkflowType] = useState('full_development');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -178,6 +243,32 @@ const MultiAgentOrchestrator = () => {
   const [workflowProgress, setWorkflowProgress] = useState(0);
   const [currentStepProgress, setCurrentStepProgress] = useState(0);
   const [realTimeUpdates, setRealTimeUpdates] = useState<RealTimeUpdate[]>([]);
+  
+  // Enhanced output rendering state
+  const [outputTab, setOutputTab] = useState(0);
+  const [generatedCode, setGeneratedCode] = useState<Record<string, string>>({});
+  const [documentation, setDocumentation] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [analyticsData, setAnalyticsData] = useState<Record<string, any>>({});
+
+  // New state for workflow control and self-improvement
+  const [canStop, setCanStop] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
+  const [autoCorrect, setAutoCorrect] = useState(true);
+  const [maxRetries, setMaxRetries] = useState(3);
+  const [currentRetry, setCurrentRetry] = useState(0);
+  const [completedResults, setCompletedResults] = useState<Record<string, any>>({});
+  const [showResultsDialog, setShowResultsDialog] = useState(false);
+  const [selectedResult, setSelectedResult] = useState<any>(null);
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
+
+  // Debounced update handler to prevent performance violations
+  const debouncedUpdateHandler = useMemo(
+    () => debounce((update: any) => {
+      handleRealTimeUpdateInternal(update);
+    }, 50), // 50ms debounce to prevent overwhelming the UI
+    []
+  );
 
   // Load demo scenarios and live metrics on component mount
   useEffect(() => {
@@ -286,90 +377,16 @@ const MultiAgentOrchestrator = () => {
     setWorkflowType('full_development');
   };
 
-  const executeWorkflow = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setActiveStep(0);
-    setSteps([]);
-    setIsRunning(true);
-    setWorkflowProgress(0);
-    setCurrentStepProgress(0);
-    setRealTimeUpdates([]);
-
-    try {
-      // Start the workflow using the correct endpoint
-      const response = await axios.post('http://localhost:8000/api/workflow/execute', {
-        project_description: description,
-        programming_language: language,
-        workflow_type: workflowType,
-      });
-
-      console.log('Workflow started:', response.data);
-      
-      const workflowId = response.data.workflow_id;
-      
-      // Set up Server-Sent Events for real-time updates
-      const eventSource = new EventSource(`http://localhost:8000/api/workflow/stream/${workflowId}`);
-      setEventSource(eventSource);
-      
-      eventSource.onmessage = (event) => {
-        try {
-          const update = JSON.parse(event.data);
-          handleRealTimeUpdate(update);
-        } catch (error) {
-          console.error('Failed to parse SSE message:', error);
-        }
-      };
-      
-      eventSource.addEventListener('step_update', (event) => {
-        try {
-          const update = JSON.parse((event as any).data);
-          handleRealTimeUpdate({ ...update, type: 'step_update' });
-        } catch (error) {
-          console.error('Failed to parse step_update:', error);
-        }
-      });
-      
-      eventSource.addEventListener('step_complete', (event) => {
-        try {
-          const update = JSON.parse((event as any).data);
-          handleRealTimeUpdate({ ...update, type: 'step_complete' });
-        } catch (error) {
-          console.error('Failed to parse step_complete:', error);
-        }
-      });
-      
-      eventSource.addEventListener('workflow_complete', (event) => {
-        try {
-          const update = JSON.parse((event as any).data);
-          handleRealTimeUpdate({ ...update, type: 'workflow_complete' });
-        } catch (error) {
-          console.error('Failed to parse workflow_complete:', error);
-        }
-      });
-      
-      eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
-        setError('Connection to workflow stream lost');
-        setIsRunning(false);
-        setLoading(false);
-        eventSource.close();
-      };
-      
-    } catch (err: any) {
-      console.error('Workflow execution failed:', err);
-      setError(err.response?.data?.detail || 'Failed to execute workflow');
-      setLoading(false);
-      setIsRunning(false);
-    }
-  };
-
-  const handleRealTimeUpdate = (update: any) => {
+  const handleRealTimeUpdateInternal = useCallback((update: any) => {
     console.log('Real-time update:', update);
     
-    setLoading(false); // Turn off loading once we start getting updates
+    setLoading(false);
+    
+    // Ensure update has proper structure and prevent undefined displays
+    if (!update || typeof update !== 'object') {
+      console.warn('Invalid update received:', update);
+      return;
+    }
     
     switch (update.type || update.event) {
       case 'workflow_status':
@@ -380,13 +397,16 @@ const MultiAgentOrchestrator = () => {
         setActiveStep(status.current_step || 0);
         setWorkflowProgress(status.progress || 0);
         
-        // Add real-time activity update
+        // Fix undefined display by ensuring proper message formatting
+        const activityMessage = update.message || 
+          (status.status ? `🔄 Workflow: ${status.status} - Step ${status.current_step}/${status.total_steps}` : 'Workflow status update');
+        
         const activityUpdate: RealTimeUpdate = {
           type: 'workflow_status',
-          workflow_id: status.workflow_id || 'workflow',
+          workflow_id: status.workflow_id || workflowId || 'workflow',
           data: status,
           timestamp: new Date().toISOString(),
-          message: update.message || `🔄 Workflow: ${status.status} - Step ${status.current_step}/${status.total_steps}`
+          message: activityMessage
         };
         setRealTimeUpdates(prev => [activityUpdate, ...prev.slice(0, 4)]);
         break;
@@ -394,13 +414,13 @@ const MultiAgentOrchestrator = () => {
       case 'step_update':
         const stepUpdate = update.data || update;
         setCurrentStepProgress(stepUpdate.progress || 0);
-        setWorkflowProgress(stepUpdate.progress || 0);
         
-        // Create or update step in steps array
-        const stepId = stepUpdate.step || stepUpdate.step_id || Math.random().toString();
+        const stepId = stepUpdate.step || stepUpdate.step_id || `step_${Date.now()}`;
+        const agentName = stepUpdate.step || stepUpdate.agent_name || 'AI Agent';
+        
         const newStep: WorkflowStep = {
           step_id: stepId,
-          agent_name: stepUpdate.step || stepUpdate.agent_name || 'AI Agent',
+          agent_name: agentName,
           status: 'running',
           progress: stepUpdate.progress || 0,
           start_time: Date.now()
@@ -417,36 +437,88 @@ const MultiAgentOrchestrator = () => {
           }
         });
         
+        const stepMessage = update.message || `⚡ ${agentName}: ${stepUpdate.progress || 0}%`;
         const stepUpdateMsg: RealTimeUpdate = {
           type: 'step_update',
-          workflow_id: update.workflow_id || 'workflow',
+          workflow_id: update.workflow_id || workflowId || 'workflow',
           data: stepUpdate,
           timestamp: new Date().toISOString(),
-          message: update.message || `⚡ ${stepUpdate.step}: ${stepUpdate.progress || 0}%`
+          message: stepMessage
         };
         setRealTimeUpdates(prev => [stepUpdateMsg, ...prev.slice(0, 4)]);
         break;
         
       case 'step_complete':
         const completedStep = update.data || update;
-        const completeStepId = completedStep.step || completedStep.step_id || Math.random().toString();
+        const completeStepId = completedStep.step || completedStep.step_id || `completed_${Date.now()}`;
+        const completedAgentName = completedStep.step || completedStep.agent_name || 'AI Agent';
+        
+        // Store completed result for immediate access
+        if (completedStep.result) {
+          const resultData = {
+            agent_name: completedAgentName,
+            result: completedStep.result,
+            timestamp: new Date().toISOString(),
+            duration: completedStep.duration || 0
+          };
+          
+          setCompletedResults(prev => ({
+            ...prev,
+            [completeStepId]: resultData
+          }));
+
+          // Extract and process different types of outputs
+          const result = completedStep.result;
+          if (result) {
+            // Extract generated code
+            if (result.generated_code || result.full_code || result.files || result.generated_files) {
+              const code = result.full_code || result.generated_code;
+              const files = result.files || result.generated_files || {};
+              if (code) {
+                files['main.py'] = code;
+              }
+              if (Object.keys(files).length > 0) {
+                setGeneratedCode(prev => ({ ...prev, ...files }));
+              }
+            }
+            
+            // Extract documentation
+            if (result.documentation) {
+              setDocumentation(result.documentation);
+            }
+            
+            // Extract preview URL or deployment info
+            if (result.preview_url || result.deployment_url) {
+              setPreviewUrl(result.preview_url || result.deployment_url);
+            }
+            
+            // Extract analytics/metrics data
+            if (result.metrics || result.analysis) {
+              setAnalyticsData(prev => ({
+                ...prev,
+                [completeStepId]: result.metrics || result.analysis
+              }));
+            }
+          }
+        }
         
         setSteps(prev => prev.map(step => 
           (step && step.step_id === completeStepId) ? { 
             ...step, 
-            status: 'completed', 
+            status: 'completed' as const, 
             end_time: Date.now(),
             result: completedStep.result || 'Completed successfully',
             progress: 100
           } : step
         ).filter(step => step !== null));
         
+        const completeMessage = update.message || `✅ ${completedAgentName}: Completed successfully`;
         const completeUpdate: RealTimeUpdate = {
           type: 'step_complete',
-          workflow_id: update.workflow_id || 'workflow',
+          workflow_id: update.workflow_id || workflowId || 'workflow',
           data: completedStep,
           timestamp: new Date().toISOString(),
-          message: update.message || `✅ ${completedStep.step}: Completed successfully`
+          message: completeMessage
         };
         setRealTimeUpdates(prev => [completeUpdate, ...prev.slice(0, 4)]);
         setCurrentStepProgress(0);
@@ -455,9 +527,9 @@ const MultiAgentOrchestrator = () => {
       case 'workflow_complete':
         const finalData = update.data || update;
         setIsRunning(false);
+        setCanStop(false);
         setWorkflowProgress(100);
         
-        // Create a comprehensive result object
         const workflowResult: WorkflowResult = {
           steps: finalData.results || {},
           timeline: [],
@@ -473,16 +545,16 @@ const MultiAgentOrchestrator = () => {
         };
         setResult(workflowResult);
         
+        const finalMessage = update.message || '🎉 Workflow completed successfully!';
         const finalUpdate: RealTimeUpdate = {
           type: 'workflow_complete',
-          workflow_id: update.workflow_id || 'workflow',
+          workflow_id: update.workflow_id || workflowId || 'workflow',
           data: finalData,
           timestamp: new Date().toISOString(),
-          message: update.message || '🎉 Workflow completed successfully!'
+          message: finalMessage
         };
         setRealTimeUpdates(prev => [finalUpdate, ...prev.slice(0, 4)]);
         
-        // Close the event source
         if (eventSource) {
           eventSource.close();
           setEventSource(null);
@@ -490,22 +562,44 @@ const MultiAgentOrchestrator = () => {
         break;
         
       case 'error':
-        setError(update.message || update.data?.message || 'Workflow execution failed');
-        setIsRunning(false);
-        setLoading(false);
+        const errorMessage = update.message || update.data?.message || 'Workflow execution failed';
         
-        if (eventSource) {
-          eventSource.close();
-          setEventSource(null);
+        // Auto-correction mechanism
+        if (autoCorrect && currentRetry < maxRetries) {
+          setCurrentRetry(prev => prev + 1);
+          console.log(`Auto-retry attempt ${currentRetry + 1}/${maxRetries}`);
+          
+          const retryUpdate: RealTimeUpdate = {
+            type: 'error',
+            workflow_id: update.workflow_id || workflowId || 'workflow',
+            data: update,
+            timestamp: new Date().toISOString(),
+            message: `⚠️ Error occurred, auto-retrying (${currentRetry + 1}/${maxRetries}): ${errorMessage}`
+          };
+          setRealTimeUpdates(prev => [retryUpdate, ...prev.slice(0, 4)]);
+          
+          // Retry after a delay
+          setTimeout(() => {
+            executeWorkflow(new Event('submit') as any);
+          }, 2000);
+        } else {
+          setError(errorMessage);
+          setIsRunning(false);
+          setCanStop(false);
+          setLoading(false);
+          
+          if (eventSource) {
+            eventSource.close();
+            setEventSource(null);
+          }
         }
         break;
         
       default:
-        // Handle any other message types
         if (update.message) {
           const genericUpdate: RealTimeUpdate = {
             type: 'workflow_status',
-            workflow_id: update.workflow_id || 'workflow',
+            workflow_id: update.workflow_id || workflowId || 'workflow',
             data: update,
             timestamp: new Date().toISOString(),
             message: update.message
@@ -514,49 +608,171 @@ const MultiAgentOrchestrator = () => {
         }
         break;
     }
+  }, [eventSource, steps, currentRetry, maxRetries, autoCorrect, workflowId]);
+
+  const executeWorkflow = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isRunning) {
+      return;
+    }
+
+    // Reset retry counter for new workflow
+    setCurrentRetry(0);
+    setCompletedResults({});
+    setError('');
+    setResult(null);
+    setSteps([]);
+    setGeneratedCode({});
+    setDocumentation('');
+    setPreviewUrl('');
+    setAnalyticsData({});
+    setRealTimeUpdates([]);
+    setWorkflowProgress(0);
+    setCurrentStepProgress(0);
+    setActiveStep(0);
+    
+    try {
+      setLoading(true);
+      setIsRunning(true);
+      setCanStop(true);
+
+      // Handle 'none' language option for novice users
+      const effectiveLanguage = language === 'none' ? 'python' : language;
+
+      const response = await fetch(`${API_BASE_URL}/api/workflow/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          project_description: description,
+          programming_language: effectiveLanguage,
+          workflow_type: workflowType,
+          code_sample: '', // Optional
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Workflow started:', data);
+      
+      setWorkflowId(data.workflow_id);
+
+      // Start SSE connection for real-time updates
+      const eventSourceUrl = `${API_BASE_URL}/api/workflow/stream/${data.workflow_id}`;
+      const newEventSource = new EventSource(eventSourceUrl);
+      setEventSource(newEventSource);
+
+      newEventSource.onopen = () => {
+        console.log('SSE connection opened');
+      };
+
+      newEventSource.onmessage = (event) => {
+        try {
+          const update = JSON.parse(event.data);
+          debouncedUpdateHandler(update);
+        } catch (err) {
+          console.error('Failed to parse SSE message:', err);
+        }
+      };
+
+      newEventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        
+        // Only attempt recovery if still running and not terminating
+        if (newEventSource.readyState === EventSource.OPEN && !isTerminating) {
+          console.log('SSE connection error, but still open - attempting to recover');
+          return;
+        }
+        
+        if (newEventSource.readyState === EventSource.CLOSED) {
+          console.log('SSE connection closed');
+          setEventSource(null);
+          
+          if (isRunning && !isTerminating) {
+            setError('Connection lost. Please try again.');
+            setIsRunning(false);
+            setCanStop(false);
+          }
+        }
+      };
+      
+    } catch (err: any) {
+      console.error('Workflow execution failed:', err);
+      setError(err.response?.data?.detail || 'Failed to execute workflow');
+      setLoading(false);
+      setIsRunning(false);
+      setCanStop(false);
+    }
   };
 
-  const stopWorkflow = () => {
+  const stopWorkflow = async () => {
+    setIsTerminating(true);
+    setCanStop(false);
+    
+    try {
+      if (workflowId) {
+        await fetch(`${API_BASE_URL}/api/workflow/stop/${workflowId}`, {
+          method: 'POST'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to stop workflow:', err);
+    }
+    
     setIsRunning(false);
     setError('Workflow stopped by user');
     
-    // Close the event source if it exists
     if (eventSource) {
       eventSource.close();
       setEventSource(null);
     }
+    
+    const stopUpdate: RealTimeUpdate = {
+      type: 'workflow_status',
+      workflow_id: workflowId || 'workflow',
+      data: {},
+      timestamp: new Date().toISOString(),
+      message: '🛑 Workflow stopped by user'
+    };
+    setRealTimeUpdates(prev => [stopUpdate, ...prev.slice(0, 4)]);
+    
+    setIsTerminating(false);
   };
 
-  // Cleanup effect for EventSource
-  useEffect(() => {
-    return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
-    };
-  }, [eventSource]);
+  const viewCompletedResult = (stepId: string) => {
+    const result = completedResults[stepId];
+    if (result) {
+      setSelectedResult(result);
+      setShowResultsDialog(true);
+    }
+  };
 
   const getStepIcon = (status: string, agent: string) => {
     const iconProps = { fontSize: 'small' as const };
     
     // Map agent names to icons
     const agentIconMap: Record<string, JSX.Element> = {
-      'IdeationAgent': <IdeationIcon {...iconProps} />,
-      'CodeOptimizer': <CodeIcon {...iconProps} />,
-      'SecurityAnalyzer': <SecurityIcon {...iconProps} />,
-      'TestGenerator': <TestIcon {...iconProps} />,
-      'DocGenerator': <DocsIcon {...iconProps} />,
-      'CodeReviewer': <ReviewIcon {...iconProps} />,
+      'IdeationAgent': <Psychology {...iconProps} />,
+      'CodeOptimizer': <Code {...iconProps} />,
+      'SecurityAnalyzer': <Security {...iconProps} />,
+      'TestGenerator': <BugReport {...iconProps} />,
+      'DocGenerator': <Description {...iconProps} />,
+      'CodeReviewer': <RateReview {...iconProps} />,
       // Legacy mappings
-      'ideation': <IdeationIcon {...iconProps} />,
-      'code_generation': <CodeIcon {...iconProps} />,
-      'security_analysis': <SecurityIcon {...iconProps} />,
-      'test_generation': <TestIcon {...iconProps} />,
-      'documentation': <DocsIcon {...iconProps} />,
-      'code_review': <ReviewIcon {...iconProps} />,
+      'ideation': <Psychology {...iconProps} />,
+      'code_generation': <Code {...iconProps} />,
+      'security_analysis': <Security {...iconProps} />,
+      'test_generation': <BugReport {...iconProps} />,
+      'documentation': <Description {...iconProps} />,
+      'code_review': <RateReview {...iconProps} />,
     };
     
-    return agentIconMap[agent] || <CodeIcon {...iconProps} />;
+    return agentIconMap[agent] || <Code {...iconProps} />;
   };
 
   const formatDuration = (start?: number, end?: number) => {
@@ -567,15 +783,213 @@ const MultiAgentOrchestrator = () => {
 
   const getStepStatus = (step: WorkflowStep | null | undefined) => {
     if (!step || !step.status) {
-      return { color: '#9e9e9e', icon: <PendingIcon /> };
+      return { color: '#9e9e9e', icon: <Pending /> };
     }
     switch (step.status) {
-      case 'completed': return { color: '#4caf50', icon: <CheckIcon /> };
+      case 'completed': return { color: '#4caf50', icon: <CheckCircle /> };
       case 'running': return { color: '#ff9800', icon: <CircularProgress size={16} /> };
-      case 'failed': return { color: '#f44336', icon: <ErrorIcon /> };
-      default: return { color: '#9e9e9e', icon: <PendingIcon /> };
+      case 'failed': return { color: '#f44336', icon: <Error /> };
+      default: return { color: '#9e9e9e', icon: <Pending /> };
     }
   };
+
+  const renderRealTimeActivity = () => (
+    <Card sx={{ height: '400px', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Typography variant="h6" gutterBottom>
+          ⚡ Real-time Activity
+        </Typography>
+        
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {realTimeUpdates.length === 0 ? (
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              No activity yet. Start a workflow to see real-time updates.
+            </Typography>
+          ) : (
+            <List dense>
+              {realTimeUpdates.map((update, index) => (
+                <ListItem key={index} sx={{ py: 0.5 }}>
+                  <Box sx={{ width: '100%' }}>
+                    <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>
+                      {update.message || 'Update received'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(update.timestamp).toLocaleTimeString()}
+                    </Typography>
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  const renderCompletedResults = () => (
+    <Card sx={{ mt: 2 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          📋 Completed Results ({Object.keys(completedResults).length})
+        </Typography>
+        
+        {Object.keys(completedResults).length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No completed results yet.
+          </Typography>
+        ) : (
+          <Stack spacing={1}>
+            {Object.entries(completedResults).map(([stepId, result]) => (
+              <Paper key={stepId} sx={{ p: 2, bgcolor: 'success.light', color: 'success.contrastText' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="subtitle2">
+                      ✅ {result.agent_name}
+                    </Typography>
+                    <Typography variant="caption">
+                      Completed in {result.duration}s at {new Date(result.timestamp).toLocaleTimeString()}
+                    </Typography>
+                  </Box>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<Visibility />}
+                    onClick={() => viewCompletedResult(stepId)}
+                    sx={{ color: 'inherit', borderColor: 'inherit' }}
+                  >
+                    View
+                  </Button>
+                </Box>
+              </Paper>
+            ))}
+          </Stack>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderWorkflowControls = () => (
+    <Card sx={{ mb: 2 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={autoCorrect}
+                onChange={(e) => setAutoCorrect(e.target.checked)}
+                disabled={isRunning}
+              />
+            }
+            label="Auto-retry on errors"
+          />
+          <TextField
+            label="Max Retries"
+            type="number"
+            value={maxRetries}
+            onChange={(e) => setMaxRetries(Math.max(1, Math.min(5, parseInt(e.target.value) || 3)))}
+            disabled={isRunning}
+            size="small"
+            sx={{ width: 120 }}
+            inputProps={{ min: 1, max: 5 }}
+          />
+          {currentRetry > 0 && (
+            <Chip
+              icon={<Refresh />}
+              label={`Retry ${currentRetry}/${maxRetries}`}
+              color="warning"
+              size="small"
+            />
+          )}
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            type="submit"
+            variant="contained"
+            startIcon={isRunning ? <CircularProgress size={20} /> : <PlayArrow />}
+            disabled={isRunning || !description.trim()}
+            sx={{ flex: 1 }}
+          >
+            {isRunning ? 'Running...' : 'Execute Multi-Agent Workflow'}
+          </Button>
+          
+          {canStop && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={isTerminating ? <CircularProgress size={20} /> : <Stop />}
+              onClick={stopWorkflow}
+              disabled={isTerminating}
+            >
+              {isTerminating ? 'Stopping...' : 'Stop'}
+            </Button>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  // Results Dialog Component
+  const renderResultsDialog = () => (
+    <Dialog
+      open={showResultsDialog}
+      onClose={() => setShowResultsDialog(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle>
+        Agent Result: {selectedResult?.agent_name}
+      </DialogTitle>
+      <DialogContent>
+        {selectedResult?.result && (
+          <Box>
+            {selectedResult.result.display_content && (
+              <Paper sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+                <Typography variant="h6" gutterBottom>
+                  📊 Formatted Output
+                </Typography>
+                <Typography component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                  {selectedResult.result.display_content}
+                </Typography>
+              </Paper>
+            )}
+            
+            {selectedResult.result.generated_files && (
+              <Paper sx={{ p: 2, mb: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  📁 Generated Files
+                </Typography>
+                {Object.entries(selectedResult.result.generated_files).map(([filename, content]) => (
+                  <Accordion key={filename}>
+                    <AccordionSummary expandIcon={<ExpandMore />}>
+                      <Typography variant="subtitle2">{filename}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Typography component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                        {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                      </Typography>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </Paper>
+            )}
+            
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                🔍 Raw Result Data
+              </Typography>
+              <Typography component="pre" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                {JSON.stringify(selectedResult.result, null, 2)}
+              </Typography>
+            </Paper>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setShowResultsDialog(false)}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
 
   return (
     <Container maxWidth="xl">
@@ -664,7 +1078,7 @@ const MultiAgentOrchestrator = () => {
           >
             <Paper sx={{ p: 3, mb: 4, bgcolor: 'rgba(0,0,0,0.02)' }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <MagicIcon color="primary" />
+                <AutoAwesome color="primary" />
                 Live Platform Statistics
               </Typography>
               
@@ -976,31 +1390,7 @@ const MultiAgentOrchestrator = () => {
                     </Select>
                   </FormControl>
 
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      size="large"
-                      sx={{ mt: 3 }}
-                      disabled={loading || !description.trim()}
-                      startIcon={loading ? <CircularProgress size={20} /> : <PlayIcon />}
-                    >
-                      {loading ? 'Executing Workflow...' : 'Execute Multi-Agent Workflow'}
-                    </Button>
-                    
-                    {isRunning && (
-                      <Button
-                        variant="outlined"
-                        startIcon={<StopIcon />}
-                        onClick={stopWorkflow}
-                        color="error"
-                      >
-                        Stop
-                      </Button>
-                    )}
-                  </Box>
+                  {renderWorkflowControls()}
                 </form>
               </Paper>
             </motion.div>
@@ -1103,19 +1493,56 @@ const MultiAgentOrchestrator = () => {
                             </Alert>
                           )}
                           {step.result && (
-                            <Paper sx={{ p: 2, backgroundColor: '#2d2d2d' }}>
-                              <pre style={{ 
-                                fontSize: '0.8rem', 
-                                margin: 0, 
-                                whiteSpace: 'pre-wrap',
-                                maxHeight: '200px',
-                                overflow: 'auto'
-                              }}>
-                                {typeof step.result === 'string' 
-                                  ? step.result 
-                                  : JSON.stringify(step.result, null, 2)}
-                              </pre>
-                            </Paper>
+                            <Box sx={{ mt: 2 }}>
+                              {/* Display formatted content if available */}
+                              {step.result.display_content ? (
+                                <Paper sx={{ p: 3, backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.1)' }}>
+                                  <Typography variant="body2" component="pre" sx={{ 
+                                    fontSize: '0.875rem', 
+                                    margin: 0, 
+                                    whiteSpace: 'pre-wrap',
+                                    fontFamily: 'monospace',
+                                    lineHeight: 1.6,
+                                    color: 'text.primary'
+                                  }}>
+                                    {step.result.display_content}
+                                  </Typography>
+                                </Paper>
+                              ) : step.result.formatted_output ? (
+                                <Paper sx={{ p: 3, backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.1)' }}>
+                                  <Typography variant="body2" component="pre" sx={{ 
+                                    fontSize: '0.875rem', 
+                                    margin: 0, 
+                                    whiteSpace: 'pre-wrap',
+                                    fontFamily: 'monospace',
+                                    lineHeight: 1.6,
+                                    color: 'text.primary'
+                                  }}>
+                                    {step.result.formatted_output}
+                                  </Typography>
+                                </Paper>
+                              ) : step.result.summary ? (
+                                <Alert severity="success" sx={{ mb: 2 }}>
+                                  <Typography variant="body2">
+                                    {step.result.summary}
+                                  </Typography>
+                                </Alert>
+                              ) : (
+                                <Paper sx={{ p: 2, backgroundColor: '#2d2d2d' }}>
+                                  <pre style={{ 
+                                    fontSize: '0.8rem', 
+                                    margin: 0, 
+                                    whiteSpace: 'pre-wrap',
+                                    maxHeight: '200px',
+                                    overflow: 'auto'
+                                  }}>
+                                    {typeof step.result === 'string' 
+                                      ? step.result 
+                                      : JSON.stringify(step.result, null, 2)}
+                                  </pre>
+                                </Paper>
+                              )}
+                            </Box>
                           )}
                         </StepContent>
                       </Step>
@@ -1126,113 +1553,13 @@ const MultiAgentOrchestrator = () => {
             </motion.div>
 
             {/* Real-time Activity Feed */}
-            {realTimeUpdates.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <Paper sx={{ p: 3, mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    📡 Real-time Activity
-                  </Typography>
-                  <Box sx={{ maxHeight: '300px', overflow: 'auto' }}>
-                    {realTimeUpdates.slice(-10).reverse().map((update, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Alert 
-                          severity={update.type === 'error' ? 'error' : 'info'} 
-                          sx={{ mb: 1, fontSize: '0.875rem' }}
-                        >
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="body2">
-                              {update.message}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {new Date(update.timestamp).toLocaleTimeString()}
-                            </Typography>
-                          </Box>
-                        </Alert>
-                      </motion.div>
-                    ))}
-                  </Box>
-                </Paper>
-              </motion.div>
-            )}
+            {renderRealTimeActivity()}
 
-            {/* Results */}
-            {(result || error) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    📊 Workflow Results
-                  </Typography>
+            {/* Completed Results */}
+            {renderCompletedResults()}
 
-                  {error && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                      {error}
-                    </Alert>
-                  )}
-
-                  {result && (
-                    <>
-                      {/* Summary Cards */}
-                      <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={6}>
-                          <Card>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <SpeedIcon color="primary" sx={{ mb: 1 }} />
-                              <Typography variant="h6">
-                                {result.total_time.toFixed(1)}s
-                              </Typography>
-                              <Typography variant="caption">Total Time</Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Card>
-                            <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                              <CheckIcon color="success" sx={{ mb: 1 }} />
-                              <Typography variant="h6">
-                                {result.summary.success_rate * 100}%
-                              </Typography>
-                              <Typography variant="caption">Success Rate</Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      </Grid>
-
-                      {/* Detailed Results */}
-                      {Object.entries(result.steps).map(([stepKey, stepResult]) => (
-                        <Accordion key={stepKey} sx={{ mb: 1 }}>
-                          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              {getStepIcon(stepResult.status, stepKey)}
-                              <Typography>
-                                {stepKey.replace('_', ' ').toUpperCase()}
-                              </Typography>
-                            </Box>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
-                              {formatDuration(stepResult.startTime, stepResult.endTime) + ' - ' + (stepResult.error ? ErrorIcon : CheckIcon)}
-                            </Typography>
-                          </AccordionDetails>
-                        </Accordion>
-                      ))}
-                    </>
-                  )}
-                </Paper>
-              </motion.div>
-            )}
+            {/* Results Dialog */}
+            {renderResultsDialog()}
           </Grid>
         </Grid>
       </Box>

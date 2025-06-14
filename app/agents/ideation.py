@@ -1,19 +1,17 @@
 import os
+import os
 import re
 import json
 from typing import Dict, List, Any, Optional
-import openai
-from app.core.ai_service import MultiProviderAIService
+from app.core.ai_service import ai_service
 
 class Ideation:
     """Agent for generating project ideas, specifications, user stories, and sprint plans."""
     
     def __init__(self):
         """Initialize the Ideation agent."""
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.novita_api_key = os.getenv("NOVITA_API_KEY")
-        self.ai_service = MultiProviderAIService()
+        # Use centralized AI service (OpenAI only for hackathon)
+        self.ai_service = ai_service
         
         # Define project scope templates
         self.scope_templates = {

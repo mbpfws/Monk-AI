@@ -5,34 +5,15 @@ import asyncio
 import time
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
+from app.core.ai_service import ai_service
 
 class SecurityAnalyzer:
     """Advanced Agent for analyzing code for security vulnerabilities with OWASP Top 10 categorization."""
     
     def __init__(self):
         """Initialize the SecurityAnalyzer agent."""
-        # Try to initialize API clients if keys are available
-        self.openai_client = None
-        self.anthropic_client = None
-        
-        try:
-            openai_key = os.getenv("OPENAI_API_KEY")
-            anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-            
-            if openai_key:
-                from openai import OpenAI
-                self.openai_client = OpenAI(api_key=openai_key)
-                
-            if anthropic_key:
-                from anthropic import Anthropic
-                self.anthropic_client = Anthropic(api_key=anthropic_key)
-                
-        except ImportError:
-            # API libraries not installed, will use fallback
-            pass
-        except Exception:
-            # Any other error, will use fallback
-            pass
+        # Use centralized AI service (OpenAI only for hackathon)
+        self.ai_service = ai_service
         
         # OWASP Top 10 2023 categories with detailed descriptions
         self.owasp_categories = {
@@ -415,22 +396,17 @@ class SecurityAnalyzer:
     
     async def _get_ai_analysis(self, prompt: str, language: str) -> str:
         """Get security analysis from AI model."""
-        # Try real API first, fallback to mock if unavailable
-        if self.openai_client:
-            try:
-                response = await self.openai_client.chat.completions.create(
-                    model="gpt-4-turbo-preview",
-                    messages=[{
-                        "role": "user",
-                        "content": prompt
-                    }],
-                    temperature=0.3
-                )
-                
-                return response.choices[0].message.content
-            except Exception:
-                # API call failed, fall back to mock
-                pass
+        try:
+            response = await self.ai_service.generate_response(
+                prompt=prompt,
+                max_tokens=2000,
+                temperature=0.3
+            )
+            
+            return response
+        except Exception as e:
+            print(f"Error calling AI service for security analysis: {str(e)}")
+            # Fall back to mock response
         
         # Fallback mock response
         mock_response = """# Security Analysis Report

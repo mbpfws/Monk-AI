@@ -1,31 +1,13 @@
 from typing import Dict, Any, List
 import os
 import re
+from typing import Dict, Any
+from app.core.ai_service import ai_service
 
 class DocGenerator:
     def __init__(self):
-        # Try to initialize API clients if keys are available
-        self.openai_client = None
-        self.anthropic_client = None
-        
-        try:
-            openai_key = os.getenv("OPENAI_API_KEY")
-            anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-            
-            if openai_key:
-                from openai import OpenAI
-                self.openai_client = OpenAI(api_key=openai_key)
-                
-            if anthropic_key:
-                from anthropic import Anthropic
-                self.anthropic_client = Anthropic(api_key=anthropic_key)
-                
-        except ImportError:
-            # API libraries not installed, will use fallback
-            pass
-        except Exception:
-            # Any other error, will use fallback
-            pass
+        # Use centralized AI service (OpenAI only for hackathon)
+        self.ai_service = ai_service
 
     async def generate_docs(self, code: str, language: str, context: str = None) -> Dict[str, Any]:
         """
@@ -52,39 +34,35 @@ class DocGenerator:
 
     async def _analyze_code(self, code: str, language: str) -> Dict[str, Any]:
         """
-        Analyze code structure using AI models.
+        Analyze the code structure and identify key components.
         """
-        # Try real API first, fallback to mock if unavailable
-        if self.anthropic_client:
-            try:
-                analysis_prompt = f"""
-                Analyze the following {language} code and identify:
-                1. Main functions and their purposes
-                2. Classes and their relationships
-                3. Key algorithms and patterns
-                4. Dependencies and imports
-                5. Entry points and main flow
-                
-                Code:
-                {code}
-                """
-                
-                response = await self.anthropic_client.messages.create(
-                    model="claude-3-opus-20240229",
-                    max_tokens=1000,
-                    messages=[{
-                        "role": "user",
-                        "content": analysis_prompt
-                    }]
-                )
-                
-                return {
-                    "analysis": response.content,
-                    "raw_code": code
-                }
-            except Exception:
-                # API call failed, fall back to mock
-                pass
+        # Use centralized AI service (OpenAI only for hackathon)
+        try:
+            analysis_prompt = f"""
+            Analyze the following {language} code and identify:
+            1. Functions and their purposes
+            2. Classes and their methods
+            3. Key algorithms and data structures
+            4. Dependencies and imports
+            5. Main entry points
+            
+            Code:
+            {code}
+            """
+            
+            response = await self.ai_service.generate_response(
+                prompt=analysis_prompt,
+                max_tokens=1000,
+                temperature=0.3
+            )
+            
+            return {
+                "analysis": response["response"],
+                "raw_code": code
+            }
+        except Exception:
+            # API call failed, fall back to mock
+            pass
         
         # Fallback mock analysis
         mock_analysis = f"""
@@ -116,49 +94,45 @@ class DocGenerator:
         """
         Generate comprehensive documentation based on code analysis.
         """
-        # Try real API first, fallback to mock if unavailable
-        if self.openai_client:
-            try:
-                doc_prompt = f"""
-                Generate comprehensive documentation based on the following code analysis:
-                {analysis['analysis']}
-                
-                Additional context: {context if context else 'None provided'}
-                
-                Format the documentation as:
-                1. Overview and purpose
-                2. Function documentation (parameters, return values, examples)
-                3. Class documentation (properties, methods, inheritance)
-                4. Usage examples
-                5. Best practices and notes
-                """
-                
-                response = await self.openai_client.chat.completions.create(
-                    model="gpt-4-turbo-preview",
-                    messages=[{
-                        "role": "user",
-                        "content": doc_prompt
-                    }],
-                    temperature=0.7
-                )
-                
-                content = response.choices[0].message.content
-                
-                # Extract different sections from the response
-                overview = self._extract_overview(content)
-                functions = self._extract_functions(content)
-                classes = self._extract_classes(content)
-                examples = self._extract_examples(content)
-                
-                return {
-                    "overview": overview,
-                    "functions": functions,
-                    "classes": classes,
-                    "examples": examples
-                }
-            except Exception:
-                # API call failed, fall back to mock
-                pass
+        # Use centralized AI service (OpenAI only for hackathon)
+        try:
+            doc_prompt = f"""
+            Generate comprehensive documentation based on the following code analysis:
+            {analysis['analysis']}
+            
+            Additional context: {context if context else 'None provided'}
+            
+            Format the documentation as:
+            1. Overview and purpose
+            2. Function documentation (parameters, return values, examples)
+            3. Class documentation (properties, methods, inheritance)
+            4. Usage examples
+            5. Best practices and notes
+            """
+            
+            response = await self.ai_service.generate_response(
+                prompt=doc_prompt,
+                max_tokens=2000,
+                temperature=0.7
+            )
+            
+            content = response["response"]
+            
+            # Extract different sections from the response
+            overview = self._extract_overview(content)
+            functions = self._extract_functions(content)
+            classes = self._extract_classes(content)
+            examples = self._extract_examples(content)
+            
+            return {
+                "overview": overview,
+                "functions": functions,
+                "classes": classes,
+                "examples": examples
+            }
+        except Exception:
+            # API call failed, fall back to mock
+            pass
         
         # Fallback mock documentation
         mock_documentation = f"""

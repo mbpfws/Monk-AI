@@ -7,18 +7,15 @@ import ast
 import httpx
 from typing import Dict, List, Any, Optional, Tuple
 from collections import defaultdict
+from app.core.ai_service import ai_service
 
 class CodeOptimizer:
     """Advanced Agent for analyzing code and providing optimization suggestions with performance metrics."""
     
     def __init__(self):
         """Initialize the CodeOptimizer agent."""
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.novita_api_key = os.getenv("NOVITA_API_KEY")
-        
-        if not self.openai_api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
+        # Use centralized AI service (OpenAI only for hackathon)
+        self.ai_service = ai_service
         
         # Enhanced optimization categories with scoring
         self.categories = {
@@ -223,7 +220,7 @@ class CodeOptimizer:
         return prompt
     
     async def _get_ai_suggestions(self, prompt: str, language: str) -> str:
-        """Get optimization suggestions from OpenAI API.
+        """Get optimization suggestions from AI service.
         
         Args:
             prompt: The prompt to send to the AI
@@ -233,46 +230,19 @@ class CodeOptimizer:
             The AI-generated optimization suggestions
         """
         try:
-            async with httpx.AsyncClient() as client:
-                headers = {
-                    "Authorization": f"Bearer {self.openai_api_key}",
-                    "Content-Type": "application/json"
-                }
-                
-                data = {
-                    "model": "gpt-3.5-turbo",
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": f"You are an expert {language} code optimization specialist. Analyze code and provide specific, actionable optimization suggestions with clear before/after examples. Format your response with clear sections for each optimization category."
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "max_tokens": 2000,
-                    "temperature": 0.1
-                }
-                
-                response = await client.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers=headers,
-                    json=data,
-                    timeout=30.0
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    return result["choices"][0]["message"]["content"]
-                else:
-                    print(f"OpenAI API Error: {response.status_code} - {response.text}")
-                    # Fallback to mock response if API fails
-                    return self._get_fallback_response(language)
+            system_prompt = f"You are an expert {language} code optimization specialist. Analyze code and provide specific, actionable optimization suggestions with clear before/after examples. Format your response with clear sections for each optimization category."
+            
+            response = await self.ai_service.generate_response(
+                prompt=f"{system_prompt}\n\n{prompt}",
+                max_tokens=2000,
+                temperature=0.1
+            )
+            
+            return response
                     
         except Exception as e:
-            print(f"Error calling OpenAI API: {str(e)}")
-            # Fallback to mock response if API fails
+            print(f"Error calling AI service: {str(e)}")
+            # Fallback to mock response if AI fails
             return self._get_fallback_response(language)
     
     def _get_fallback_response(self, language: str) -> str:
