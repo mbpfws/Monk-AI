@@ -10,6 +10,9 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.core.config import settings
 
+# JWT Algorithm
+ALGORITHM = "HS256"
+
 # OAuth2 scheme for token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
