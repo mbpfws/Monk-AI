@@ -2,6 +2,7 @@ from typing import Dict, Any, List
 import os
 from openai import OpenAI
 from anthropic import Anthropic
+import re
 
 class TestGenerator:
     def __init__(self):
@@ -135,7 +136,7 @@ class TestGenerator:
                 test_code = match.group(0).strip()
                 
                 # Try to extract the test description from comments
-                description_match = re.search(r'"""([\s\S]*?)"""|\\'\\'\\'([\s\S]*?)\\'\\'\\'|#\s*(.*)', test_code)
+                description_match = re.search(r'"""([\s\S]*?)"""|\'\'\'([\s\S]*?)\'\'\'|#\s*(.*)', test_code)
                 description = ""
                 if description_match:
                     if description_match.group(1):
@@ -182,7 +183,7 @@ class TestGenerator:
                 test_code = match.group(0).strip()
                 
                 # Try to extract the test description from comments
-                description_match = re.search(r'"""([\s\S]*?)"""|\\'\\'\\'([\s\S]*?)\\'\\'\\'|#\s*(.*)', test_code)
+                description_match = re.search(r'"""([\s\S]*?)"""|\'\'\'([\s\S]*?)\'\'\'|#\s*(.*)', test_code)
                 description = ""
                 if description_match:
                     if description_match.group(1):
@@ -229,7 +230,7 @@ class TestGenerator:
                 test_code = match.group(0).strip()
                 
                 # Try to extract the test description from comments
-                description_match = re.search(r'"""([\s\S]*?)"""|\\'\\'\\'([\s\S]*?)\\'\\'\\'|#\s*(.*)', test_code)
+                description_match = re.search(r'"""([\s\S]*?)"""|\'\'\'([\s\S]*?)\'\'\'|#\s*(.*)', test_code)
                 description = ""
                 if description_match:
                     if description_match.group(1):
