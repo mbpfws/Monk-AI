@@ -16,7 +16,8 @@ import {
   Tune as TuneIcon,
   Security as SecurityIcon,
   RateReview as ReviewIcon,
-  AutoAwesome as AutoAwesomeIcon
+  AutoAwesome as AutoAwesomeIcon,
+  Group as GroupIcon
 } from '@mui/icons-material';
 
 interface NavigationItem {
@@ -74,6 +75,12 @@ const navigationItems: NavigationItem[] = [
     label: 'PR Reviewer',
     icon: <ReviewIcon />,
     color: '#9c27b0'
+  },
+  {
+    path: '/collaboration',
+    label: 'Collaboration',
+    icon: <GroupIcon />,
+    color: '#2196f3'
   }
 ];
 
@@ -146,4 +153,4 @@ const Navigation: React.FC = () => {
   );
 };
 
-export default Navigation; 
+export default Navigation;

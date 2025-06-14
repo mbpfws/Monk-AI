@@ -21,6 +21,7 @@ import SecurityAnalyzer from './pages/SecurityAnalyzer';
 import DocGenerator from './pages/DocGenerator';
 import PRReviewer from './pages/PRReviewer';
 import LiveWorkflowDemo from './components/LiveWorkflowDemo';
+import Collaboration from './pages/Collaboration';
 
 // Dark theme configuration
 const darkTheme = createTheme({
@@ -143,6 +144,11 @@ const App: React.FC = () => {
             <Route path="/security-analyzer" element={<SecurityAnalyzer />} />
             <Route path="/doc-generator" element={<DocGenerator />} />
             <Route path="/pr-reviewer" element={<PRReviewer />} />
+            
+            {/* Collaboration */}
+            <Route path="/collaboration" element={<Collaboration />} />
+            
+            {/* Live Demo */}
             <Route path="/live-demo" element={<LiveWorkflowDemo />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
