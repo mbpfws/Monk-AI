@@ -15,7 +15,7 @@ api_router.include_router(projects.router, prefix="/projects", tags=["projects"]
 api_router.include_router(snippets.router, prefix="/snippets", tags=["snippets"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
-api_router.include_router(workflow.router, tags=["workflow"])
+api_router.include_router(workflow.router, prefix="/workflow", tags=["workflow"])
 
 # Add missing endpoints for frontend compatibility
 @api_router.post("/generate-project-scope")
