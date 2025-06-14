@@ -5,11 +5,13 @@ TraeDevMate is an intelligent multi-agent system that helps developers with code
 
 ## Features
 
-- 🤖 Multi-agent system for different development tasks
-- 📝 Automated PR reviews and suggestions
-- 📚 Documentation generation
-- 🧪 Test case generation
-- 🔍 Code analysis and improvement suggestions
+- Multi-agent system for different development tasks
+- Automated PR reviews and suggestions
+- Documentation generation
+- Test case generation
+-  Code analysis and improvement suggestions
+- Context-Aware AI Dev Mentor (Auto-Learning Agent)
+- Secure Code Copilot with Auto-Threat Modeling
 
 ## Tech Stack
 
