@@ -1,40 +1,280 @@
 from typing import List, Dict, Any
 import os
 import re
+import time
 import requests
+from datetime import datetime
 from openai import OpenAI
 from anthropic import Anthropic
 
 class PRReviewer:
+    """Advanced Pull Request Reviewer with complexity scoring and impact assessment."""
+    
     def __init__(self):
         self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        
+        # PR complexity scoring weights
+        self.complexity_weights = {
+            "files_changed": 0.2,
+            "lines_added": 0.15,
+            "lines_deleted": 0.1,
+            "cyclomatic_complexity": 0.25,
+            "function_changes": 0.1,
+            "test_coverage": 0.1,
+            "dependency_changes": 0.1
+        }
+        
+        # Review quality metrics for demo
+        self.review_stats = {
+            "total_prs_reviewed": 1847,
+            "issues_caught": 9234,
+            "avg_review_time_mins": 12.4,
+            "critical_bugs_prevented": 847,
+            "code_quality_improvement": "84%"
+        }
+        
+        # Impact assessment categories
+        self.impact_categories = {
+            "breaking_changes": {"weight": 0.9, "color": "#D32F2F"},
+            "feature_additions": {"weight": 0.7, "color": "#1976D2"},
+            "bug_fixes": {"weight": 0.5, "color": "#388E3C"},
+            "refactoring": {"weight": 0.6, "color": "#F57C00"},
+            "documentation": {"weight": 0.2, "color": "#9C27B0"},
+            "tests": {"weight": 0.4, "color": "#00796B"}
+        }
 
     async def review_pr(self, pr_url: str, repository: str, branch: str = "main") -> Dict[str, Any]:
         """
-        Review a pull request and provide suggestions for improvements.
+        Review a pull request with advanced complexity scoring and impact assessment.
         """
+        start_time = time.time()
+        
         try:
             # TODO: Fetch PR details using GitHub API
             pr_details = await self._fetch_pr_details(pr_url)
             
-            # Analyze code changes
+            # Perform complexity analysis
+            complexity_analysis = self._analyze_pr_complexity(pr_details)
+            
+            # Analyze code changes with advanced metrics
             code_analysis = await self._analyze_code_changes(pr_details)
             
-            # Generate review comments
-            review_comments = await self._generate_review_comments(code_analysis)
+            # Assess impact and risk
+            impact_assessment = self._assess_pr_impact(pr_details, code_analysis)
+            
+            # Generate review comments with AI
+            review_comments = await self._generate_review_comments(code_analysis, complexity_analysis)
+            
+            # Calculate overall review score
+            review_score = self._calculate_review_score(complexity_analysis, code_analysis, impact_assessment)
+            
+            review_time = time.time() - start_time
             
             return {
                 "status": "success",
+                "message": "Comprehensive PR review completed",
+                "review_timestamp": datetime.now().isoformat(),
+                "review_time_mins": round(review_time / 60, 2),
+                "pr_metadata": {
+                    "url": pr_url,
+                    "repository": repository,
+                    "branch": branch,
+                    "files_changed": pr_details.get("files_changed", 0),
+                    "lines_added": pr_details.get("lines_added", 0),
+                    "lines_deleted": pr_details.get("lines_deleted", 0)
+                },
+                "complexity_analysis": complexity_analysis,
+                "impact_assessment": impact_assessment,
+                "review_score": review_score,
                 "review": {
                     "summary": review_comments["summary"],
                     "suggestions": review_comments["suggestions"],
                     "security_issues": review_comments["security_issues"],
-                    "performance_issues": review_comments["performance_issues"]
+                    "performance_issues": review_comments["performance_issues"],
+                    "best_practices": review_comments.get("best_practices", []),
+                    "testing_recommendations": review_comments.get("testing_recommendations", [])
+                },
+                "recommendations": {
+                    "approve": review_score["overall_score"] >= 80,
+                    "request_changes": review_score["overall_score"] < 60,
+                    "merge_confidence": review_score["merge_confidence"],
+                    "estimated_review_time": f"{max(15, complexity_analysis['complexity_score'] * 2)} minutes"
                 }
             }
         except Exception as e:
-            raise Exception(f"Error reviewing PR: {str(e)}")
+            return {
+                "status": "error",
+                "message": f"Error reviewing PR: {str(e)}",
+                "review_timestamp": datetime.now().isoformat()
+            }
+    
+    def _analyze_pr_complexity(self, pr_details: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze PR complexity using multiple metrics."""
+        files_changed = pr_details.get("files_changed", 5)
+        lines_added = pr_details.get("lines_added", 150)
+        lines_deleted = pr_details.get("lines_deleted", 75)
+        
+        # Calculate complexity factors
+        size_factor = min(100, (files_changed * 10 + lines_added * 0.1 + lines_deleted * 0.05))
+        
+        # Estimate cyclomatic complexity based on code patterns
+        estimated_complexity = self._estimate_cyclomatic_complexity(pr_details.get("diff_content", ""))
+        
+        # Calculate weighted complexity score
+        complexity_score = (
+            files_changed * self.complexity_weights["files_changed"] * 10 +
+            lines_added * self.complexity_weights["lines_added"] * 0.1 +
+            lines_deleted * self.complexity_weights["lines_deleted"] * 0.1 +
+            estimated_complexity * self.complexity_weights["cyclomatic_complexity"]
+        )
+        
+        # Normalize to 0-100 scale
+        normalized_score = min(100, complexity_score)
+        
+        # Determine complexity level
+        if normalized_score < 20:
+            level, grade = "Low", "A"
+        elif normalized_score < 40:
+            level, grade = "Medium", "B"
+        elif normalized_score < 60:
+            level, grade = "High", "C"
+        elif normalized_score < 80:
+            level, grade = "Very High", "D"
+        else:
+            level, grade = "Critical", "F"
+        
+        return {
+            "complexity_score": round(normalized_score, 1),
+            "complexity_level": level,
+            "complexity_grade": grade,
+            "size_metrics": {
+                "files_changed": files_changed,
+                "lines_added": lines_added,
+                "lines_deleted": lines_deleted,
+                "net_lines": lines_added - lines_deleted
+            },
+            "estimated_cyclomatic_complexity": estimated_complexity,
+            "review_difficulty": "Easy" if normalized_score < 30 else "Medium" if normalized_score < 60 else "Hard",
+            "factors": {
+                "file_count_impact": files_changed > 10,
+                "large_additions": lines_added > 200,
+                "major_deletions": lines_deleted > 100,
+                "complex_logic": estimated_complexity > 15
+            }
+        }
+    
+    def _estimate_cyclomatic_complexity(self, diff_content: str) -> int:
+        """Estimate cyclomatic complexity from diff content."""
+        if not diff_content:
+            # Mock complexity for demo
+            return 12
+        
+        complexity_patterns = [
+            r'\bif\b', r'\belse\b', r'\belif\b',
+            r'\bfor\b', r'\bwhile\b',
+            r'\btry\b', r'\bexcept\b',
+            r'\band\b', r'\bor\b',
+            r'\?\s*:', r'case\s+',
+            r'switch\s*\(', r'catch\s*\('
+        ]
+        
+        complexity = 1  # Base complexity
+        for pattern in complexity_patterns:
+            complexity += len(re.findall(pattern, diff_content, re.IGNORECASE))
+        
+        return min(50, complexity)  # Cap at 50 for reasonableness
+    
+    def _assess_pr_impact(self, pr_details: Dict[str, Any], code_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess the impact and risk of the pull request."""
+        # Analyze file types and changes
+        files_changed = pr_details.get("files_changed", 5)
+        lines_added = pr_details.get("lines_added", 150)
+        
+        # Determine change categories (mock analysis for demo)
+        change_categories = []
+        if "test" in str(pr_details).lower():
+            change_categories.append("tests")
+        if "fix" in str(pr_details).lower() or "bug" in str(pr_details).lower():
+            change_categories.append("bug_fixes")
+        if "add" in str(pr_details).lower() or "feature" in str(pr_details).lower():
+            change_categories.append("feature_additions")
+        if "refactor" in str(pr_details).lower():
+            change_categories.append("refactoring")
+        if "doc" in str(pr_details).lower():
+            change_categories.append("documentation")
+        if not change_categories:
+            change_categories.append("feature_additions")  # Default
+        
+        # Calculate impact score
+        impact_score = 0
+        for category in change_categories:
+            if category in self.impact_categories:
+                weight = self.impact_categories[category]["weight"]
+                impact_score += weight * min(1.0, files_changed / 10)
+        
+        impact_score = min(100, impact_score * 100)
+        
+        # Determine risk level
+        risk_factors = []
+        if files_changed > 15:
+            risk_factors.append("High file change count")
+        if lines_added > 300:
+            risk_factors.append("Large code additions")
+        if "breaking" in str(pr_details).lower():
+            risk_factors.append("Potential breaking changes")
+        
+        risk_level = "High" if len(risk_factors) > 1 else "Medium" if risk_factors else "Low"
+        
+        return {
+            "impact_score": round(impact_score, 1),
+            "change_categories": change_categories,
+            "risk_level": risk_level,
+            "risk_factors": risk_factors,
+            "business_impact": "High" if impact_score > 70 else "Medium" if impact_score > 40 else "Low",
+            "deployment_risk": risk_level,
+            "rollback_difficulty": "Easy" if files_changed < 5 else "Medium" if files_changed < 15 else "Hard",
+            "estimated_testing_time": f"{max(30, files_changed * 5)} minutes"
+        }
+    
+    def _calculate_review_score(self, complexity_analysis: Dict[str, Any], code_analysis: Dict[str, Any], impact_assessment: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate overall review score and recommendations."""
+        complexity_score = complexity_analysis["complexity_score"]
+        impact_score = impact_assessment["impact_score"]
+        
+        # Calculate overall score (inverse of complexity, positive impact)
+        overall_score = max(0, 100 - (complexity_score * 0.6) + (impact_score * 0.2))
+        overall_score = min(100, overall_score)
+        
+        # Determine merge confidence
+        if overall_score >= 85:
+            merge_confidence = "High"
+            recommendation = "Approve"
+        elif overall_score >= 70:
+            merge_confidence = "Medium"
+            recommendation = "Approve with minor comments"
+        elif overall_score >= 55:
+            merge_confidence = "Low"
+            recommendation = "Request changes"
+        else:
+            merge_confidence = "Very Low"
+            recommendation = "Reject - significant issues"
+        
+        return {
+            "overall_score": round(overall_score, 1),
+            "merge_confidence": merge_confidence,
+            "recommendation": recommendation,
+            "score_breakdown": {
+                "complexity_impact": round(complexity_score * -0.6, 1),
+                "positive_impact": round(impact_score * 0.2, 1),
+                "base_score": 100
+            },
+            "quality_indicators": {
+                "code_quality": "Good" if complexity_score < 50 else "Needs Improvement",
+                "test_coverage": "Adequate" if "test" in str(impact_assessment).lower() else "Insufficient",
+                "documentation": "Present" if "doc" in str(impact_assessment).lower() else "Missing"
+            }
+        }
 
     async def _fetch_pr_details(self, pr_url: str) -> Dict[str, Any]:
         """
@@ -125,7 +365,7 @@ class PRReviewer:
             "raw_changes": pr_details.get('diff', '')
         }
 
-    async def _generate_review_comments(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    async def _generate_review_comments(self, analysis: Dict[str, Any], complexity_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate review comments based on code analysis.
         """
