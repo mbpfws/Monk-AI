@@ -33,6 +33,14 @@ try:
 except Exception as e:
     print(f"❌ Failed to load agents router: {e}")
 
+# Try to import and include workflow router
+try:
+    from .api.routes.workflow import router as workflow_router
+    app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
+    print("✅ Workflow router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load workflow router: {e}")
+
 # Root endpoint
 @app.get("/")
 async def root():

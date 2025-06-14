@@ -43,6 +43,10 @@ class OrchestrationResult:
             "success": result is not None
         })
         
+    @property
+    def summary(self):
+        return self._generate_summary()
+    
     def to_dict(self):
         return {
             "steps": self.steps,
@@ -170,13 +174,13 @@ class AgentOrchestrator:
         description = context.get("description", "")
         template_key = context.get("template_key", None)
         
-        # Generate project scope
-        project_scope = await self.ideation_agent.generate_project_scope(description, template_key)
+        # Generate project scope (not async)
+        project_scope = self.ideation_agent.generate_project_scope(description, template_key)
         
-        # Generate technical specs
+        # Generate technical specs (async)
         technical_specs = await self.ideation_agent.generate_technical_specs(project_scope)
         
-        # Generate user stories
+        # Generate user stories (async)
         user_stories = await self.ideation_agent.generate_user_stories(project_scope)
         
         return {

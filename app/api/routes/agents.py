@@ -135,17 +135,24 @@ async def review_pull_request(request: PRReviewRequest):
 async def generate_project_ideas(request: IdeationRequest):
     """Generate project ideas using the Ideation agent"""
     try:
-        # Generate project scope
-        project_scope = await ideation_agent.generate_project_scope(
+        # Generate project scope first
+        project_scope = ideation_agent.generate_project_scope(
             description=request.description,
             template_key=request.template_key
         )
         
-        # Generate technical specs
-        technical_specs = await ideation_agent.generate_technical_specs(project_scope)
+        # Generate technical specs and user stories concurrently
+        technical_specs_task = asyncio.create_task(
+            asyncio.to_thread(ideation_agent.generate_technical_specs, project_scope)
+        )
+        user_stories_task = asyncio.create_task(
+            asyncio.to_thread(ideation_agent.generate_user_stories, project_scope)
+        )
         
-        # Generate user stories
-        user_stories = await ideation_agent.generate_user_stories(project_scope)
+        # Wait for both tasks to complete
+        technical_specs, user_stories = await asyncio.gather(
+            technical_specs_task, user_stories_task
+        )
         
         return {
             "status": "success",
@@ -154,6 +161,7 @@ async def generate_project_ideas(request: IdeationRequest):
             "user_stories": user_stories
         }
     except Exception as e:
+        print(f"Ideation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Ideation failed: {str(e)}")
 
 @router.post("/orchestrate")
@@ -241,4 +249,4 @@ async def health_check():
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
