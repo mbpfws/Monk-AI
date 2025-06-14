@@ -10,6 +10,7 @@ import CodeOptimizer from './pages/CodeOptimizer';
 import SecurityAnalyzer from './pages/SecurityAnalyzer';
 import IdeationAgent from './pages/Ideation';
 import MultiAgentOrchestrator from './pages/MultiAgentOrchestrator';
+import Collaboration from './pages/Collaboration';
 import Navigation from './components/Navigation';
 
 const App: React.FC = () => {
@@ -35,10 +36,11 @@ const App: React.FC = () => {
               <Route path="/code-optimizer" element={<CodeOptimizer />} />
               <Route path="/security-analyzer" element={<SecurityAnalyzer />} />
               <Route path="/ideation" element={<IdeationAgent />} />
+              <Route path="/collaboration" element={<Collaboration />} />
             </Routes>
           </Container>
         </Box>
   );
 };
 
-export default App; 
+export default App;
