@@ -134,7 +134,7 @@ class DocGenerator:
                 """
                 
                 response = await self.openai_client.chat.completions.create(
-                    model="gpt-4o-turbo-preview",
+                    model="gpt-4-turbo-preview",
                     messages=[{
                         "role": "user",
                         "content": doc_prompt

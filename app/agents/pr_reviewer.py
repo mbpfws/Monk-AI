@@ -369,7 +369,7 @@ class PRReviewer:
         """
         Generate review comments based on code analysis.
         """
-        # Use gpt-4oo for generating review comments
+        # Use GPT-4o for generating review comments
         review_prompt = f"""
         Based on the following code analysis, generate a structured PR review:
         {analysis['analysis']}
@@ -382,7 +382,7 @@ class PRReviewer:
         """
         
         response = await self.openai_client.chat.completions.create(
-            model="gpt-4o-turbo-preview",
+            model="gpt-4-turbo-preview",
             messages=[{
                 "role": "user",
                 "content": review_prompt

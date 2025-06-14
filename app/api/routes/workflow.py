@@ -660,7 +660,7 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
     yield create_sse_message("workflow_complete", workflow_complete_data)
 
 async def generate_step_result(step_key: str, request: WorkflowRequest) -> Dict:
-    """Generate REAL AI results for each step using OpenAI gpt-4oo."""
+    """Generate REAL AI results for each step using OpenAI GPT-4o."""
     
     if step_key == "ideation":
         try:
@@ -688,7 +688,7 @@ Keep it concise and practical."""
                 "agent": "🧠 Ideation & Planning",
                 "analysis": f"AI Analysis: {ai_analysis[:200]}...",
                 "ai_generated": True,
-                "model_used": response.get('model', 'gpt-4oo'),
+                "model_used": response.get('model', 'gpt-4o'),
                 "provider": response.get('provider', 'openai'),
                 "full_response": ai_analysis
             }
@@ -726,7 +726,7 @@ Keep it concise but functional."""
                 "agent": "💻 Code Generation",
                 "analysis": f"Generated {request.programming_language} code with AI optimizations",
                 "ai_generated": True,
-                "model_used": response.get('model', 'gpt-4oo'),
+                "model_used": response.get('model', 'gpt-4o'),
                 "provider": response.get('provider', 'openai'),
                 "generated_code": generated_code[:500] + "..." if len(generated_code) > 500 else generated_code,
                 "lines_generated": len(generated_code.split('\n')),

@@ -94,7 +94,7 @@ async def demo_multi_agent_orchestrator():
     print("🏆 DEMO COMPLETE - MULTI-AGENT SYSTEM WORKING!")
     print("🎯 KEY FEATURES DEMONSTRATED:")
     print("   ✅ Multi-Agent Orchestration")
-    print("   ✅ Real AI Integration (OpenAI gpt-4o)")
+    print("   ✅ Real AI Integration (OpenAI GPT-4)")
     print("   ✅ Workflow Execution")
     print("   ✅ Code Generation")
     print("   ✅ End-to-End Automation")

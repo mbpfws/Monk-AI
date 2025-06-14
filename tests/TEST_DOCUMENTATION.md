@@ -31,7 +31,7 @@ npm install
 - **Status**: Pre-configured
 - **API Key**: `your-openai-api-key-here`
 - **Base URL**: `https://api.openai.com/v1`
-- **Model**: `gpt-4o`
+- **Model**: `gpt-4`
 
 #### Google Gemini API
 - **Setup**: User-provided API key
@@ -42,7 +42,7 @@ npm install
 #### OpenRouter API
 - **Setup**: User-provided API key
 - **Base URL**: `https://openrouter.ai/api/v1`
-- **Model**: `openai/gpt-4o`
+- **Model**: `openai/gpt-4`
 - **Integration**: Compatible with OpenAI SDK
 - **Documentation**: [OpenRouter Docs](https://openrouter.ai/docs)
 
