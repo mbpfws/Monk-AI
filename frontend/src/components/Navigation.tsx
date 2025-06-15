@@ -18,7 +18,12 @@ import {
   RateReview as ReviewIcon,
   AutoAwesome as AutoAwesomeIcon,
   Slideshow as SlideshowIcon,
+<<<<<<< HEAD
   Group as GroupIcon
+=======
+  Group as GroupIcon,
+  Public as PublicIcon
+>>>>>>> 3258ec8ed28032f9b41b5f58eb392e52109c83bb
 } from '@mui/icons-material';
 
 interface NavigationItem {
@@ -76,6 +81,12 @@ const navigationItems: NavigationItem[] = [
     label: 'PR Reviewer',
     icon: <ReviewIcon />,
     color: '#9c27b0'
+  },
+  {
+    path: '/domains',
+    label: 'Domains',
+    icon: <PublicIcon />,
+    color: '#e91e63'
   },
   {
     path: '/presentation',

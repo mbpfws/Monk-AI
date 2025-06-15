@@ -12,6 +12,7 @@ from typing import Dict, Optional, AsyncGenerator, Any
 from app.agents.ideation import Ideation
 from app.agents.code_optimizer import CodeOptimizer
 from app.agents.orchestrator import AgentOrchestrator
+from app.crud.agent_log import AgentLogRepository
 
 router = APIRouter(tags=["workflow"])
 

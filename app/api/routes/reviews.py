@@ -8,7 +8,7 @@ from app.crud.review import review_crud
 from app.crud.code_snippet import snippet_crud
 from app.models.user import User
 from app.schemas.review import ReviewCreate, ReviewResponse, ReviewUpdate
-from app.agents.review_agent import process_review
+from app.agents.pr_reviewer import process_review
 
 router = APIRouter()
 

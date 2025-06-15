@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
+  Container,
   Paper,
   Button,
   Grid,
@@ -19,7 +20,6 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -35,7 +35,11 @@ import {
   ListItemSecondaryAction,
   Snackbar,
   Badge,
+<<<<<<< HEAD
   Container,
+=======
+  Dialog as MuiDialog,
+>>>>>>> 3258ec8ed28032f9b41b5f58eb392e52109c83bb
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -232,7 +236,11 @@ const messagesMock: Message[] = [
     sender_id: 102,
     sender_name: 'Jane Doe',
     sender_avatar: 'https://via.placeholder.com/40',
+<<<<<<< HEAD
     content: 'I will take a look at it this afternoon. Are there any specific areas you want me to focus on?',
+=======
+    content: "I'll take a look at it this afternoon. Are there any specific areas you want me to focus on?",
+>>>>>>> 3258ec8ed28032f9b41b5f58eb392e52109c83bb
     timestamp: '2023-03-10T09:45:00Z',
   },
   {
@@ -945,7 +953,7 @@ const Collaboration: React.FC = () => {
       </Grid>
 
       {/* Team Dialog */}
-      <Dialog open={showTeamDialog} onClose={() => setShowTeamDialog(false)} maxWidth="sm" fullWidth>
+      <MuiDialog open={showTeamDialog} onClose={() => setShowTeamDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editMode ? 'Edit Team' : 'Create New Team'}</DialogTitle>
         <DialogContent>
           <TextField
@@ -984,10 +992,10 @@ const Collaboration: React.FC = () => {
           <Button onClick={() => setShowTeamDialog(false)}>Cancel</Button>
           <Button onClick={saveTeam} variant="contained">{editMode ? 'Update' : 'Create'}</Button>
         </DialogActions>
-      </Dialog>
+      </MuiDialog>
 
       {/* Project Dialog */}
-      <Dialog open={showProjectDialog} onClose={() => setShowProjectDialog(false)} maxWidth="sm" fullWidth>
+      <MuiDialog open={showProjectDialog} onClose={() => setShowProjectDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editMode ? 'Edit Project' : 'Add Project'}</DialogTitle>
         <DialogContent>
           <TextField
@@ -1046,10 +1054,10 @@ const Collaboration: React.FC = () => {
           <Button onClick={() => setShowProjectDialog(false)}>Cancel</Button>
           <Button onClick={saveProject} variant="contained">{editMode ? 'Update' : 'Add'}</Button>
         </DialogActions>
-      </Dialog>
+      </MuiDialog>
 
       {/* Member Dialog */}
-      <Dialog open={showMemberDialog} onClose={() => setShowMemberDialog(false)} maxWidth="sm" fullWidth>
+      <MuiDialog open={showMemberDialog} onClose={() => setShowMemberDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Team Member</DialogTitle>
         <DialogContent>
           <TextField
@@ -1082,10 +1090,10 @@ const Collaboration: React.FC = () => {
           <Button onClick={() => setShowMemberDialog(false)}>Cancel</Button>
           <Button onClick={addMember} variant="contained">Invite</Button>
         </DialogActions>
-      </Dialog>
+      </MuiDialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
+      <MuiDialog open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
@@ -1096,7 +1104,7 @@ const Collaboration: React.FC = () => {
           <Button onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
           <Button onClick={handleDelete} color="error" variant="contained">Delete</Button>
         </DialogActions>
-      </Dialog>
+      </MuiDialog>
 
       {/* Snackbar for notifications */}
       <Snackbar

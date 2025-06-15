@@ -23,6 +23,7 @@ import PRReviewer from './pages/PRReviewer';
 import LiveWorkflowDemo from './components/LiveWorkflowDemo';
 import HackathonPresentation from './components/HackathonPresentation';
 import Collaboration from './pages/Collaboration';
+import Domains from './pages/Domains';
 
 // Dark theme configuration
 const darkTheme = createTheme({
@@ -148,6 +149,9 @@ const App: React.FC = () => {
             
             {/* Collaboration */}
             <Route path="/collaboration" element={<Collaboration />} />
+            
+            {/* Domain Management */}
+            <Route path="/domains" element={<Domains />} />
             
             {/* Live Demo */}
             <Route path="/live-demo" element={<LiveWorkflowDemo />} />
