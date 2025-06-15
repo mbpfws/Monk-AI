@@ -21,6 +21,7 @@ import SecurityAnalyzer from './pages/SecurityAnalyzer';
 import DocGenerator from './pages/DocGenerator';
 import PRReviewer from './pages/PRReviewer';
 import LiveWorkflowDemo from './components/LiveWorkflowDemo';
+import HackathonPresentation from './components/HackathonPresentation';
 import Collaboration from './pages/Collaboration';
 
 // Dark theme configuration
@@ -150,6 +151,11 @@ const App: React.FC = () => {
             
             {/* Live Demo */}
             <Route path="/live-demo" element={<LiveWorkflowDemo />} />
+            
+            {/* Hackathon Presentation */}
+            <Route path="/presentation" element={<HackathonPresentation />} />
+            
+            {/* Catch all route - redirect to dashboard */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Box>

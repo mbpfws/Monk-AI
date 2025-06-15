@@ -2,17 +2,17 @@ from typing import List, Dict, Any
 import os
 import re
 import time
-import requests
+import httpx
 from datetime import datetime
-from openai import OpenAI
-from anthropic import Anthropic
+from typing import Dict, Any
+from app.core.ai_service import ai_service
 
 class PRReviewer:
     """Advanced Pull Request Reviewer with complexity scoring and impact assessment."""
     
     def __init__(self):
-        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        # Use centralized AI service (OpenAI only for hackathon)
+        self.ai_service = ai_service
         
         # PR complexity scoring weights
         self.complexity_weights = {
@@ -301,19 +301,20 @@ class PRReviewer:
         if github_token:
             headers["Authorization"] = f"token {github_token}"
         
-        # Fetch PR details
-        pr_response = requests.get(pr_endpoint, headers=headers)
-        if pr_response.status_code != 200:
-            raise Exception(f"Failed to fetch PR details: {pr_response.status_code} {pr_response.text}")
+        async with httpx.AsyncClient() as client:
+            # Fetch PR details
+            pr_response = await client.get(pr_endpoint, headers=headers)
+            if pr_response.status_code != 200:
+                raise Exception(f"Failed to fetch PR details: {pr_response.status_code} {pr_response.text}")
+                
+            pr_data = pr_response.json()
             
-        pr_data = pr_response.json()
-        
-        # Fetch PR files
-        files_response = requests.get(files_endpoint, headers=headers)
-        if files_response.status_code != 200:
-            raise Exception(f"Failed to fetch PR files: {files_response.status_code} {files_response.text}")
-            
-        files_data = files_response.json()
+            # Fetch PR files
+            files_response = await client.get(files_endpoint, headers=headers)
+            if files_response.status_code != 200:
+                raise Exception(f"Failed to fetch PR files: {files_response.status_code} {files_response.text}")
+                
+            files_data = files_response.json()
         
         # Construct diff content
         diff_content = ""
@@ -351,19 +352,23 @@ class PRReviewer:
         5. Documentation needs
         """
         
-        response = await self.anthropic_client.messages.create(
-            model="claude-3-opus-20240229",
-            max_tokens=1000,
-            messages=[{
-                "role": "user",
-                "content": analysis_prompt
-            }]
-        )
-        
-        return {
-            "analysis": response.content,
-            "raw_changes": pr_details.get('diff', '')
-        }
+        try:
+            response = await self.ai_service.generate_response(
+                prompt=analysis_prompt,
+                max_tokens=1000,
+                temperature=0.1
+            )
+            
+            return {
+                "analysis": response,
+                "raw_changes": pr_details.get('diff', '')
+            }
+        except Exception as e:
+            print(f"Error analyzing code changes: {str(e)}")
+            return {
+                "analysis": "Basic analysis: Code changes detected. Manual review recommended.",
+                "raw_changes": pr_details.get('diff', '')
+            }
 
     async def _generate_review_comments(self, analysis: Dict[str, Any], complexity_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -381,17 +386,18 @@ class PRReviewer:
         4. Performance considerations
         """
         
-        response = await self.openai_client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=[{
-                "role": "user",
-                "content": review_prompt
-            }],
-            temperature=0.7
-        )
-        
-        # Parse the response content
-        content = response.choices[0].message.content
+        try:
+            response = await self.ai_service.generate_response(
+                prompt=review_prompt,
+                max_tokens=1500,
+                temperature=0.7
+            )
+            
+            # Parse the response content
+            content = response
+        except Exception as e:
+            print(f"Error generating review comments: {str(e)}")
+            content = "Basic review: Please manually review the changes for quality, security, and performance considerations."
         
         # Extract different sections from the response
         suggestions = self._extract_suggestions(content)
