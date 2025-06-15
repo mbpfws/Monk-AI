@@ -17,6 +17,7 @@ import {
   Security as SecurityIcon,
   RateReview as ReviewIcon,
   AutoAwesome as AutoAwesomeIcon,
+  Slideshow as SlideshowIcon
   Group as GroupIcon
 } from '@mui/icons-material';
 
@@ -77,6 +78,10 @@ const navigationItems: NavigationItem[] = [
     color: '#9c27b0'
   },
   {
+    path: '/presentation',
+    label: 'Hackathon Presentation',
+    icon: <SlideshowIcon />,
+    color: '#ff6b35'
     path: '/collaboration',
     label: 'Collaboration',
     icon: <GroupIcon />,
