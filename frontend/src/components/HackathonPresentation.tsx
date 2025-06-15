@@ -657,7 +657,7 @@ const HackathonPresentation: React.FC = () => {
           <Typography variant="h5" sx={{ color: 'text.secondary', mb: 3 }}>
             We're excited about the potential of TraeDevMate and the future of AI-assisted development with Trae IDE.
           </Typography>
-          <img src="/logo192.png" alt="TraeDevMate Logo" style={{ maxWidth: '200px', margin: '20px auto', filter: theme.palette.mode === 'dark' ? 'drop-shadow(0 0 15px #00A9FF)' : 'none' }} />
+          <img src="/logo512.png" alt="TraeDevMate Logo" style={{ maxWidth: '200px', margin: '20px auto', filter: theme.palette.mode === 'dark' ? 'drop-shadow(0 0 15px #00A9FF)' : 'none' }} />
           <Typography variant="h4" sx={{ color: theme.palette.secondary.main, mt: 4, mb: 2 }}>
             Questions?
           </Typography>
