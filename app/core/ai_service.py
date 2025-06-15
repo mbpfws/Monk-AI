@@ -17,7 +17,7 @@ import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
 
 from app.core.config import settings
-from app.crud.agent_log import agent_log, LogLevel
+from app.crud.agent_log import LogLevel
 
 logger = logging.getLogger(__name__)
 

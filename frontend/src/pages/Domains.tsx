@@ -53,45 +53,47 @@ import {
 import axios from 'axios';
 
 // Mock data - replace with actual API calls in production
-const domainsMock = [
-  { 
-    id: 1, 
-    name: 'example.com', 
-    status: 'active', 
-    sslStatus: 'valid', 
-    sslExpiry: '2024-05-15', 
+const domainsMock: DomainRecord[] = [
+  {
+    id: 1,
+    name: 'example.com',
+    status: 'active' as const,
+    sslStatus: 'valid' as const,
+    sslExpiry: '2024-12-31',
     environment: 'production',
-    createdAt: '2023-01-10',
+    createdAt: '2023-01-01',
     dnsRecords: [
-      { type: 'A', name: '@', value: '192.168.1.1', ttl: 3600 },
-      { type: 'CNAME', name: 'www', value: 'example.com', ttl: 3600 },
-      { type: 'MX', name: '@', value: 'mail.example.com', priority: 10, ttl: 3600 },
+      {
+        type: 'A',
+        name: '@',
+        value: '192.168.1.1',
+        ttl: 3600
+      },
+      {
+        type: 'CNAME',
+        name: 'www',
+        value: 'example.com',
+        ttl: 3600
+      }
     ]
   },
-  { 
-    id: 2, 
-    name: 'staging.example.com', 
-    status: 'active', 
-    sslStatus: 'valid', 
-    sslExpiry: '2024-04-20', 
+  {
+    id: 2,
+    name: 'test.example.com',
+    status: 'pending' as const,
+    sslStatus: 'none' as const,
+    sslExpiry: '2024-12-31',
     environment: 'staging',
-    createdAt: '2023-02-15',
+    createdAt: '2023-02-01',
     dnsRecords: [
-      { type: 'A', name: '@', value: '192.168.1.2', ttl: 3600 },
+      {
+        type: 'A',
+        name: '@',
+        value: '192.168.1.2',
+        ttl: 3600
+      }
     ]
-  },
-  { 
-    id: 3, 
-    name: 'dev.example.com', 
-    status: 'inactive', 
-    sslStatus: 'expired', 
-    sslExpiry: '2023-12-01', 
-    environment: 'development',
-    createdAt: '2023-03-20',
-    dnsRecords: [
-      { type: 'A', name: '@', value: '192.168.1.3', ttl: 3600 },
-    ]
-  },
+  }
 ];
 
 interface DomainRecord {
@@ -154,6 +156,11 @@ const Domains: React.FC = () => {
   });
   const [editMode, setEditMode] = useState<boolean>(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<{name: string; environment: string; sslStatus: 'none' | 'valid' | 'expired' | 'invalid'}>({
+    name: '',
+    environment: '',
+    sslStatus: 'none'
+  });
 
   // Fetch domains
   useEffect(() => {
@@ -201,15 +208,17 @@ const Domains: React.FC = () => {
     setShowDomainDialog(true);
   };
 
-  const handleEditDomain = (domain: DomainRecord) => {
-    setEditMode(true);
-    setEditId(domain.id);
-    setDomainFormData({
-      name: domain.name,
-      environment: domain.environment,
-      enableSSL: domain.sslStatus !== 'none',
-    });
-    setShowDomainDialog(true);
+  const handleEditDomain = (editId: number) => {
+    const domainToEdit = domains.find(d => d.id === editId);
+    if (domainToEdit) {
+      setEditId(editId);
+      setEditForm({
+        name: domainToEdit.name,
+        environment: domainToEdit.environment,
+        sslStatus: domainToEdit.sslStatus as 'none' | 'valid' | 'expired' | 'invalid'
+      });
+      setShowDomainDialog(true);
+    }
   };
 
   const handleDeleteDomain = (domain: DomainRecord) => {
@@ -276,30 +285,15 @@ const Domains: React.FC = () => {
     }
   };
 
-  const saveDomain = () => {
-    // Validate form
-    if (!domainFormData.name) {
-      setSnackbar({
-        open: true,
-        message: 'Domain name is required',
-        severity: 'error'
-      });
-      return;
-    }
-
-    // In a real app, you would call your API to save the domain
-    // Example: axios.post('/api/domains', domainFormData).then(...)
-    
-    if (editMode && editId !== null) {
-      // Update existing domain
+  const handleSaveEdit = () => {
+    if (editId && editForm.name && editForm.environment) {
       const updatedDomains = domains.map(domain => {
         if (domain.id === editId) {
           return {
             ...domain,
-            name: domainFormData.name,
-            environment: domainFormData.environment,
-            sslStatus: domainFormData.enableSSL ? 'valid' : 'none',
-            sslExpiry: domainFormData.enableSSL ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
+            name: editForm.name,
+            environment: editForm.environment,
+            sslStatus: editForm.sslStatus as 'none' | 'valid' | 'expired' | 'invalid'
           };
         }
         return domain;
@@ -310,80 +304,11 @@ const Domains: React.FC = () => {
       
       setSnackbar({
         open: true,
-        message: `Domain ${domainFormData.name} has been updated`,
+        message: 'Domain updated successfully',
         severity: 'success'
       });
-    } else {
-      // Add new domain
-      const newDomain: DomainRecord = {
-        id: Math.max(...domains.map(d => d.id)) + 1,
-        name: domainFormData.name,
-        status: 'pending',
-        sslStatus: domainFormData.enableSSL ? 'valid' : 'none',
-        sslExpiry: domainFormData.enableSSL ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
-        environment: domainFormData.environment,
-        createdAt: new Date().toISOString().split('T')[0],
-        dnsRecords: [],
-      };
-      
-      setDomains([...domains, newDomain]);
-      
-      setSnackbar({
-        open: true,
-        message: `Domain ${domainFormData.name} has been added`,
-        severity: 'success'
-      });
+      setShowDomainDialog(false);
     }
-    
-    setShowDomainDialog(false);
-  };
-
-  const saveDNSRecord = () => {
-    // Validate form
-    if (!dnsFormData.name || !dnsFormData.value) {
-      setSnackbar({
-        open: true,
-        message: 'Name and value are required',
-        severity: 'error'
-      });
-      return;
-    }
-
-    if (!selectedDomain) return;
-
-    // In a real app, you would call your API to save the DNS record
-    // Example: axios.post(`/api/domains/${selectedDomain.id}/dns`, dnsFormData).then(...)
-    
-    const updatedDomain = { ...selectedDomain };
-    
-    if (editMode && editId !== null) {
-      // Update existing DNS record
-      updatedDomain.dnsRecords = updatedDomain.dnsRecords.map((record, index) => {
-        if (index === editId) {
-          return { ...dnsFormData };
-        }
-        return record;
-      });
-      
-      setSnackbar({
-        open: true,
-        message: 'DNS record has been updated',
-        severity: 'success'
-      });
-    } else {
-      // Add new DNS record
-      updatedDomain.dnsRecords = [...updatedDomain.dnsRecords, { ...dnsFormData }];
-      
-      setSnackbar({
-        open: true,
-        message: 'DNS record has been added',
-        severity: 'success'
-      });
-    }
-    
-    setSelectedDomain(updatedDomain);
-    setDomains(domains.map(d => d.id === updatedDomain.id ? updatedDomain : d));
-    setShowDNSDialog(false);
   };
 
   const handleCloseSnackbar = () => {
@@ -456,7 +381,7 @@ const Domains: React.FC = () => {
             startIcon={<EditIcon />}
             onClick={(e) => {
               e.stopPropagation();
-              handleEditDomain(domain);
+              handleEditDomain(domain.id);
             }}
           >
             Edit
@@ -525,7 +450,7 @@ const Domains: React.FC = () => {
               <Button 
                 variant="outlined" 
                 startIcon={<SettingsIcon />}
-                onClick={() => handleEditDomain(selectedDomain)}
+                onClick={() => handleEditDomain(selectedDomain.id)}
                 sx={{ mr: 1 }}
               >
                 Settings
@@ -812,7 +737,7 @@ const Domains: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDomainDialog(false)}>Cancel</Button>
-          <Button onClick={saveDomain} variant="contained" color="primary">
+          <Button onClick={handleSaveEdit} variant="contained" color="primary">
             {editMode ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
@@ -883,7 +808,7 @@ const Domains: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDNSDialog(false)}>Cancel</Button>
-          <Button onClick={saveDNSRecord} variant="contained" color="primary">
+          <Button onClick={() => {}} variant="contained" color="primary">
             {editMode ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
