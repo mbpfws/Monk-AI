@@ -53,12 +53,12 @@ import {
 import axios from 'axios';
 
 // Mock data - replace with actual API calls in production
-const domainsMock = [
+const domainsMock: DomainRecord[] = [
   { 
     id: 1, 
     name: 'example.com', 
-    status: 'active', 
-    sslStatus: 'valid', 
+    status: 'active' as const, 
+    sslStatus: 'valid' as const, 
     sslExpiry: '2024-05-15', 
     environment: 'production',
     createdAt: '2023-01-10',
@@ -71,8 +71,8 @@ const domainsMock = [
   { 
     id: 2, 
     name: 'staging.example.com', 
-    status: 'active', 
-    sslStatus: 'valid', 
+    status: 'active' as const, 
+    sslStatus: 'valid' as const, 
     sslExpiry: '2024-04-20', 
     environment: 'staging',
     createdAt: '2023-02-15',
@@ -83,8 +83,8 @@ const domainsMock = [
   { 
     id: 3, 
     name: 'dev.example.com', 
-    status: 'inactive', 
-    sslStatus: 'expired', 
+    status: 'inactive' as const, 
+    sslStatus: 'expired' as const, 
     sslExpiry: '2023-12-01', 
     environment: 'development',
     createdAt: '2023-03-20',
@@ -298,7 +298,7 @@ const Domains: React.FC = () => {
             ...domain,
             name: domainFormData.name,
             environment: domainFormData.environment,
-            sslStatus: domainFormData.enableSSL ? 'valid' : 'none',
+            sslStatus: domainFormData.enableSSL ? ('valid' as const) : ('none' as const),
             sslExpiry: domainFormData.enableSSL ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
           };
         }
@@ -318,8 +318,8 @@ const Domains: React.FC = () => {
       const newDomain: DomainRecord = {
         id: Math.max(...domains.map(d => d.id)) + 1,
         name: domainFormData.name,
-        status: 'pending',
-        sslStatus: domainFormData.enableSSL ? 'valid' : 'none',
+        status: 'pending' as const,
+        sslStatus: domainFormData.enableSSL ? ('valid' as const) : ('none' as const),
         sslExpiry: domainFormData.enableSSL ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
         environment: domainFormData.environment,
         createdAt: new Date().toISOString().split('T')[0],

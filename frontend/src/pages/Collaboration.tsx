@@ -35,6 +35,7 @@ import {
   ListItemSecondaryAction,
   Snackbar,
   Badge,
+  Container,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -231,7 +232,7 @@ const messagesMock: Message[] = [
     sender_id: 102,
     sender_name: 'Jane Doe',
     sender_avatar: 'https://via.placeholder.com/40',
-    content: 'I'll take a look at it this afternoon. Are there any specific areas you want me to focus on?',
+    content: 'I will take a look at it this afternoon. Are there any specific areas you want me to focus on?',
     timestamp: '2023-03-10T09:45:00Z',
   },
   {
