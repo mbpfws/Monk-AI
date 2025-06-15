@@ -167,15 +167,6 @@ interface WorkflowStep {
   start_time?: number;
   end_time?: number;
   progress?: number;
-  ai_status?: {
-    provider: string;
-    model: string;
-    status: string;
-    provider_priority: number;
-    total_providers: number;
-    timestamp: string;
-    error?: string;
-  };
 }
 
 interface WorkflowStatus {
@@ -568,7 +559,6 @@ const MultiAgentOrchestrator = () => {
             end_time: Date.now(),
             result: completedStep.result || 'Completed successfully',
             progress: 100,
-            ai_status: completedStep.ai_status || null
           } : step
         ).filter(step => step !== null));
         
@@ -1890,41 +1880,6 @@ const MultiAgentOrchestrator = () => {
                                       : JSON.stringify(step.result, null, 2)}
                                   </pre>
                                 </Paper>
-                              )}
-                              
-                              {/* AI Status Information */}
-                              {step.ai_status && (
-                                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.1)', borderRadius: 1, border: '1px solid rgba(76, 175, 80, 0.3)' }}>
-                                  <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'success.main', display: 'block', mb: 1 }}>
-                                    🤖 AI Provider Status
-                                  </Typography>
-                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                    <Chip 
-                                      label={`Provider: ${step.ai_status.provider}`} 
-                                      size="small" 
-                                      color={step.ai_status.status === 'success' ? 'success' : 'warning'}
-                                      variant="outlined"
-                                    />
-                                    <Chip 
-                                      label={`Model: ${step.ai_status.model}`} 
-                                      size="small" 
-                                      variant="outlined"
-                                    />
-                                    <Chip 
-                                      label={`Priority: ${step.ai_status.provider_priority}/${step.ai_status.total_providers}`} 
-                                      size="small" 
-                                      variant="outlined"
-                                    />
-                                    {step.ai_status.error && (
-                                      <Chip 
-                                        label={`Error: ${step.ai_status.error}`} 
-                                        size="small" 
-                                        color="error"
-                                        variant="outlined"
-                                      />
-                                    )}
-                                  </Box>
-                                </Box>
                               )}
                             </Box>
                           )}

@@ -2,7 +2,7 @@ from typing import List, Dict, Any
 import os
 import re
 import time
-import requests
+import httpx
 from datetime import datetime
 from typing import Dict, Any
 from app.core.ai_service import ai_service
@@ -301,19 +301,20 @@ class PRReviewer:
         if github_token:
             headers["Authorization"] = f"token {github_token}"
         
-        # Fetch PR details
-        pr_response = requests.get(pr_endpoint, headers=headers)
-        if pr_response.status_code != 200:
-            raise Exception(f"Failed to fetch PR details: {pr_response.status_code} {pr_response.text}")
+        async with httpx.AsyncClient() as client:
+            # Fetch PR details
+            pr_response = await client.get(pr_endpoint, headers=headers)
+            if pr_response.status_code != 200:
+                raise Exception(f"Failed to fetch PR details: {pr_response.status_code} {pr_response.text}")
+                
+            pr_data = pr_response.json()
             
-        pr_data = pr_response.json()
-        
-        # Fetch PR files
-        files_response = requests.get(files_endpoint, headers=headers)
-        if files_response.status_code != 200:
-            raise Exception(f"Failed to fetch PR files: {files_response.status_code} {files_response.text}")
-            
-        files_data = files_response.json()
+            # Fetch PR files
+            files_response = await client.get(files_endpoint, headers=headers)
+            if files_response.status_code != 200:
+                raise Exception(f"Failed to fetch PR files: {files_response.status_code} {files_response.text}")
+                
+            files_data = files_response.json()
         
         # Construct diff content
         diff_content = ""

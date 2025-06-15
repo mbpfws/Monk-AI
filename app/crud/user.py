@@ -38,7 +38,3 @@ class UserRepository(BaseRepository[User]):
         db.commit()
         db.refresh(user)
         return user
-
-
-# Create instance for use in other modules
-user_crud = UserRepository()

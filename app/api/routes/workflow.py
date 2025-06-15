@@ -22,17 +22,19 @@ class AutomatedWorkflowRequest(BaseModel):
 
 class WorkflowRequest(BaseModel):
     project_description: str
-    programming_language: str = "python"
-    workflow_type: str = "full_development"
-    code_sample: Optional[str] = None
-
-def create_sse_message(event_type: str, data: Dict) -> str:
-    """Create a Server-Sent Events message."""
-    return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+    programming_language: Optional[str] = "python"
+    workflow_type: Optional[str] = "full_development"
+    code_sample: Optional[str] = ""
 
 # Global workflow store for tracking active workflows
 active_workflows = {}
-pipeline_requests = {}
+pipeline_requests: Dict[str, Any] = {}
+workflow_requests: Dict[str, WorkflowRequest] = {}
+
+def create_sse_message(event: str, data: Dict[str, Any]) -> str:
+    """Formats a message for Server-Sent Events."""
+    json_data = json.dumps(data)
+    return f"event: {event}\ndata: {json_data}\n\n"
 
 @router.post("/automated-pipeline")
 async def start_automated_pipeline(request: AutomatedWorkflowRequest):
@@ -586,57 +588,50 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
         ("code_review", "Code Review")
     ]
     
+    context = {
+        "project_description": request.project_description,
+        "programming_language": request.programming_language,
+        "workflow_type": request.workflow_type,
+        "code_sample": request.code_sample
+    }
+
     try:
-        # Send initial workflow status
-        yield create_sse_message("workflow_update", {
+        # Initial workflow started message
+        yield create_sse_message("workflow_start", {
             "workflow_id": workflow_id,
-            "status": "running",
-            "current_step": 0,
+            "status": "started",
             "total_steps": len(workflow_steps),
             "progress": 0,
-            "message": "🚀 Starting multi-agent workflow..."
+            "message": "🚀 Workflow initiated, buckle up!"
         })
-        
-        context = {
-            "project_description": request.project_description,
-            "programming_language": request.programming_language,
-            "workflow_type": request.workflow_type,
-            "code_sample": request.code_sample
-        }
-        
+
         for i, (step_key, step_name) in enumerate(workflow_steps):
+            
             # Check if workflow should stop
-            if workflow_id in active_workflows and active_workflows[workflow_id].get("should_stop", False):
-                yield create_sse_message("workflow_complete", {
+            if active_workflows.get(workflow_id, {}).get("should_stop", False):
+                yield create_sse_message("workflow_update", {
                     "workflow_id": workflow_id,
-                    "status": "stopped",
-                    "message": "Workflow stopped by user",
-                    "progress": 100
+                    "status": "stopping",
+                    "message": "Workflow stop signal received."
                 })
-                return
+                break
             
-            # Update workflow progress
-            active_workflows[workflow_id]["current_step"] = i
-            active_workflows[workflow_id]["progress"] = int((i / len(workflow_steps)) * 100)
+            step_id = f"{workflow_id}-{i+1}"
+            active_workflows[workflow_id]["current_step"] = i + 1
             
-            # Send step start update
-            step_id = f"{workflow_id}_{step_key}_{i}"
-            yield create_sse_message("step_update", {
+            # Send step start message
+            yield create_sse_message("step_start", {
                 "workflow_id": workflow_id,
                 "step_id": step_id,
                 "agent_name": step_name,
-                "status": "running",
-                "progress": 25,
-                "message": f"⚡ {step_name}: Starting..."
+                "status": "started",
+                "progress": 0,
+                "message": f"🚀 {step_name}: Starting..."
             })
             
-            # Simulate progress
-            await asyncio.sleep(0.5)
+            active_workflows[workflow_id]["progress"] = int(((i + 1) / len(workflow_steps)) * 100 * 0.5)
             
-            # Check stop again
-            if workflow_id in active_workflows and active_workflows[workflow_id].get("should_stop", False):
-                break
-            
+            # Send an update that we're in progress
             yield create_sse_message("step_update", {
                 "workflow_id": workflow_id,
                 "step_id": step_id,
@@ -653,13 +648,7 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
                 # Update context with results
                 context.update(result)
                 
-                # Extract AI service status if available
-                ai_status = result.get("ai_status", {})
-                provider_info = ""
-                if ai_status.get("provider"):
-                    provider_info = f" (Provider: {ai_status['provider']}, Priority: {ai_status.get('provider_priority', 'N/A')})"
-                
-                # Send step completion with AI status
+                # Send step completion
                 yield create_sse_message("step_complete", {
                     "workflow_id": workflow_id,
                     "step_id": step_id,
@@ -667,23 +656,21 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
                     "status": "completed",
                     "progress": 100,
                     "result": result,
-                    "duration": 2,
-                    "ai_status": ai_status,
-                    "message": f"✅ {step_name}: Completed successfully{provider_info}"
+                    "duration": 2, # Placeholder duration
+                    "message": f"✅ {step_name}: Completed successfully"
                 })
                 
                 await asyncio.sleep(0.5)
                 
             except Exception as e:
                 # Send error for this step but continue workflow
-                yield create_sse_message("step_complete", {
+                yield create_sse_message("step_error", {
                     "workflow_id": workflow_id,
                     "step_id": step_id,
                     "agent_name": step_name,
                     "status": "failed",
                     "progress": 100,
                     "error": str(e),
-                    "ai_status": {"status": "error", "error": str(e)},
                     "message": f"❌ {step_name}: Failed - {str(e)}"
                 })
                 
@@ -725,6 +712,7 @@ async def generate_workflow_stream(workflow_id: str, request: WorkflowRequest) -
 async def start_workflow(request: WorkflowRequest):
     """Start a new workflow execution."""
     workflow_id = str(uuid.uuid4())
+    workflow_requests[workflow_id] = request
     
     return {
         "workflow_id": workflow_id,
@@ -736,12 +724,10 @@ async def start_workflow(request: WorkflowRequest):
 async def stream_workflow(workflow_id: str):
     """Stream workflow execution via Server-Sent Events."""
     
-    # For demo, use default request
-    request = WorkflowRequest(
-        project_description="AI-powered web application",
-        programming_language="python",
-        workflow_type="full_development"
-    )
+    if workflow_id not in workflow_requests:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    request = workflow_requests[workflow_id]
     
     return StreamingResponse(
         generate_workflow_stream(workflow_id, request),

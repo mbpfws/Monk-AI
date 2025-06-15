@@ -50,45 +50,22 @@ class DocGenerator:
             {code}
             """
             
-            response = await self.ai_service.generate_response(
+            ai_result = await self.ai_service.generate_ai_response(
                 prompt=analysis_prompt,
                 max_tokens=1000,
                 temperature=0.3
             )
             
+            if not ai_result["success"]:
+                raise Exception(f"AI analysis failed: {ai_result['error']}")
+
             return {
-                "analysis": response["response"],
+                "analysis": ai_result["response"],
                 "raw_code": code
             }
-        except Exception:
-            # API call failed, fall back to mock
-            pass
-        
-        # Fallback mock analysis
-        mock_analysis = f"""
-        ## Code Analysis for {language.title()} Code
-
-        ### Functions Identified:
-        - Main functions detected based on code structure
-        - Input parameters and return types analyzed
-        - Control flow and logic patterns identified
-
-        ### Key Components:
-        - Programming language: {language}
-        - Code complexity: Medium
-        - Lines of code: {len(code.splitlines())}
-        - Contains functions, variables, and control structures
-
-        ### Patterns and Dependencies:
-        - Standard library usage detected
-        - Function definitions and calls identified
-        - Variable assignments and operations present
-        """
-        
-        return {
-            "analysis": mock_analysis,
-            "raw_code": code
-        }
+        except Exception as e:
+            # Re-raise exception to be handled by the main generate_docs function
+            raise Exception(f"Error analyzing code: {str(e)}")
 
     async def _generate_documentation(self, analysis: Dict[str, Any], context: str = None) -> Dict[str, Any]:
         """
@@ -110,13 +87,16 @@ class DocGenerator:
             5. Best practices and notes
             """
             
-            response = await self.ai_service.generate_response(
+            ai_result = await self.ai_service.generate_ai_response(
                 prompt=doc_prompt,
                 max_tokens=2000,
                 temperature=0.7
             )
+
+            if not ai_result["success"]:
+                raise Exception(f"AI documentation generation failed: {ai_result['error']}")
             
-            content = response["response"]
+            content = ai_result["response"]
             
             # Extract different sections from the response
             overview = self._extract_overview(content)
@@ -130,62 +110,9 @@ class DocGenerator:
                 "classes": classes,
                 "examples": examples
             }
-        except Exception:
-            # API call failed, fall back to mock
-            pass
-        
-        # Fallback mock documentation
-        mock_documentation = f"""
-        # Code Documentation
-
-        ## Overview and Purpose
-        This code provides functionality for {context if context else 'the specified application'}. 
-        The implementation follows standard coding practices and provides a clean, maintainable structure.
-
-        ## Function Documentation
-
-        ### Main Functions
-        - **Primary Function**: Core functionality implementation
-          - Parameters: As defined in the code structure
-          - Returns: Appropriate return values based on function logic
-          - Example usage provided below
-
-        ## Class Documentation
-
-        ### Main Classes
-        - **Primary Class**: Main class implementation
-          - Properties: Instance variables and attributes
-          - Methods: Public and private methods as implemented
-          - Inheritance: Standard inheritance patterns if applicable
-
-        ## Usage Examples
-
-        ```python
-        # Example usage of the documented code
-        # This shows how to implement and use the functions
-        result = main_function(parameters)
-        print(result)
-        ```
-
-        ## Best Practices and Notes
-        - Follow the coding standards as demonstrated
-        - Ensure proper error handling
-        - Use appropriate data types and structures
-        - Consider performance implications
-        """
-        
-        # Extract different sections from the mock response
-        overview = self._extract_overview(mock_documentation)
-        functions = self._extract_functions(mock_documentation)
-        classes = self._extract_classes(mock_documentation)
-        examples = self._extract_examples(mock_documentation)
-        
-        return {
-            "overview": overview,
-            "functions": functions,
-            "classes": classes,
-            "examples": examples
-        }
+        except Exception as e:
+            # Re-raise exception to be handled by the main generate_docs function
+            raise Exception(f"Error generating documentation content: {str(e)}")
     
     def _extract_overview(self, content: str) -> str:
         """Extract the overview section from the documentation content."""

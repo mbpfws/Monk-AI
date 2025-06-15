@@ -21,6 +21,7 @@ import SecurityAnalyzer from './pages/SecurityAnalyzer';
 import DocGenerator from './pages/DocGenerator';
 import PRReviewer from './pages/PRReviewer';
 import LiveWorkflowDemo from './components/LiveWorkflowDemo';
+import HackathonPresentation from './components/HackathonPresentation';
 
 // Create stunning hackathon-ready theme
 const darkTheme = createTheme({
@@ -153,6 +154,9 @@ const App: React.FC = () => {
             {/* Live Demo */}
             <Route path="/live-demo" element={<LiveWorkflowDemo />} />
             
+            {/* Hackathon Presentation */}
+            <Route path="/presentation" element={<HackathonPresentation />} />
+            
             {/* Catch all route - redirect to dashboard */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
@@ -162,4 +166,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App; 
+export default App;

@@ -13,7 +13,7 @@ from .team import TeamRepository, TeamMembershipRepository
 from .feedback import FeedbackRepository
 
 # Create instances for direct import
-user = UserRepository()
+user_crud = UserRepository()
 project = ProjectRepository()
 code_snippet = CodeSnippetRepository()
 pull_request = PullRequestRepository()
@@ -29,7 +29,8 @@ feedback = FeedbackRepository()
 
 __all__ = [
     "BaseRepository",
-    "user",
+    "user_crud",
+    "UserRepository",
     "project",
     "code_snippet",
     "pull_request", 

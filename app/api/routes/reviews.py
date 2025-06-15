@@ -4,8 +4,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
-from app.crud.crud_review import review_crud
-from app.crud.crud_snippet import snippet_crud
+from app.crud.review import review_crud
+from app.crud.code_snippet import snippet_crud
 from app.models.user import User
 from app.schemas.review import ReviewCreate, ReviewResponse, ReviewUpdate
 from app.agents.review_agent import process_review
@@ -146,4 +146,4 @@ async def delete_review(
             detail="Not enough permissions"
         )
     review = review_crud.remove(db=db, id=review_id)
-    return review 
+    return review

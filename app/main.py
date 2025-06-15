@@ -236,168 +236,125 @@ async def optimize_code(request: CodeOptimizeRequest):
         
         return {
             "status": "success",
-            "optimized_code": result.get("optimized_code", request.code),
-            "suggestions": result.get("suggestions", []),
-            "performance_improvements": result.get("performance_improvements", [])
+            "optimizations": result.get("optimizations", {}),
+            "summary": result.get("recommendations_summary", {})
         }
     except Exception as e:
         return {
-            "status": "success",
-            "optimized_code": f"# Optimized version of your code\n{request.code}\n\n# Performance improvements applied",
-            "suggestions": ["Consider using list comprehensions", "Add type hints", "Optimize loops"],
-            "performance_improvements": ["Reduced time complexity", "Memory optimization"]
+            "status": "error",
+            "optimizations": {},
+            "summary": {"error": str(e)}
         }
 
-# DOCUMENTATION ENDPOINT (for DocGenerator.tsx)
+# DOCS GENERATION ENDPOINT (for DocGenerator.tsx)
 @app.post("/api/generate-docs")
 async def generate_docs(request: DocsGenerateRequest):
-    """Generate documentation"""
-    return {
-        "status": "success",
-        "documentation": {
-            "overview": "Generated documentation for your code",
-            "functions": [
-                {
-                    "name": "main_function",
-                    "description": "Main entry point",
-                    "parameters": [],
-                    "returns": "None"
-                }
-            ],
-            "usage_examples": ["# Example usage\nresult = main_function()"],
-            "api_reference": "Complete API documentation generated"
+    """Generate documentation for code - compatible with frontend"""
+    try:
+        from .agents.doc_generator import DocGenerator
+        doc_generator = DocGenerator()
+        
+        # Log the request
+        print(f"Generating docs for {request.language} code.")
+        
+        result = await doc_generator.generate_docs(
+            code=request.code,
+            language=request.language,
+            context=request.doc_type  # Using doc_type as context
+        )
+        
+        return result
+    except Exception as e:
+        print(f"Error in generate_docs endpoint: {e}")
+        return {
+            "status": "error",
+            "documentation": {"overview": f"Error generating docs: {e}"}
         }
-    }
 
 # TEST GENERATION ENDPOINT (for TestGenerator.tsx)
 @app.post("/api/generate-tests")
 async def generate_tests(request: TestGenerateRequest):
-    """Generate tests"""
-    return {
-        "status": "success",
-        "tests": {
-            "test_code": f"import pytest\n\ndef test_function():\n    # Generated test for your code\n    assert True",
-            "test_cases": [
-                {
-                    "name": "test_basic_functionality",
-                    "description": "Test basic functionality",
-                    "expected_outcome": "Pass"
-                }
-            ],
-            "coverage_report": "Test coverage: 85%"
+    """Generate tests for code - compatible with frontend"""
+    try:
+        from .agents.test_generator import TestGenerator
+        test_generator = TestGenerator()
+        
+        result = await test_generator.generate_tests(
+            code=request.code,
+            language=request.language,
+            test_framework=request.test_framework
+        )
+        
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error generating tests: {e}"
         }
-    }
 
 # SECURITY ANALYSIS ENDPOINT (for SecurityAnalyzer.tsx)
 @app.post("/api/analyze-security")
 async def analyze_security(request: SecurityAnalyzeRequest):
-    """Analyze security"""
-    return {
-        "status": "success",
-        "security_analysis": {
-            "vulnerability_count": 2,
-            "risk_level": "Medium",
-            "vulnerabilities": [
-                {
-                    "type": "SQL Injection",
-                    "severity": "High",
-                    "description": "Potential SQL injection vulnerability",
-                    "line": 15,
-                    "recommendation": "Use parameterized queries"
-                }
-            ],
-            "recommendations": ["Add input validation", "Use HTTPS", "Implement rate limiting"]
+    """Analyze code for security vulnerabilities"""
+    try:
+        from .agents.security_analyzer import SecurityAnalyzer
+        security_analyzer = SecurityAnalyzer()
+        
+        result = await security_analyzer.analyze_security(
+            code=request.code,
+            language=request.language,
+            focus_areas=request.focus_areas
+        )
+        
+        return result
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error during security analysis: {e}"
         }
-    }
 
 # PR REVIEW ENDPOINT (for PRReviewer.tsx)
 @app.post("/api/review-pr")
 async def review_pr(request: PRReviewRequest):
-    """Review pull request"""
+    """Review PR - compatible with frontend"""
+    # This is a mock implementation for the hackathon
     return {
-        "status": "success",
-        "review": {
-            "overall_score": 8.5,
-            "summary": "Good pull request with minor improvements needed",
+        "review_summary": {
+            "overall_rating": 8.5,
+            "strengths": ["Well-structured code", "Good use of design patterns"],
+            "weaknesses": ["Needs more comments", "Some edge cases are not handled"],
+            "recommendations": ["Add unit tests for new logic", "Update documentation"]
+        },
+        "detailed_analysis": {
             "code_quality": {
-                "score": 8,
-                "issues": ["Add more comments", "Consider edge cases"]
+                "score": 85,
+                "issues": [
+                    {
+                        "type": "Readability",
+                        "severity": "Low",
+                        "description": "Variable 'x' is not descriptive.",
+                        "line_number": 23,
+                        "file_path": "src/utils.py"
+                    }
+                ]
             },
-            "security": {
-                "score": 9,
-                "issues": ["No security issues found"]
-            },
-            "performance": {
-                "score": 8,
-                "issues": ["Minor optimization opportunities"]
-            },
-            "suggestions": [
-                "Add unit tests",
-                "Update documentation",
-                "Consider error handling"
-            ]
-        }
-    }
-
-# Demo endpoints for frontend
-@app.get("/api/demo/scenarios")
-async def get_demo_scenarios():
-    return {
-        "scenarios": [
+            "security_concerns": [],
+            "performance_issues": []
+        },
+        "suggestions": [
             {
-                "id": "task-management",
-                "title": "🎯 Task Management App",
-                "description": "Build a complete task management application with user authentication, CRUD operations, and real-time updates",
-                "expected_duration": "3 minutes",
-                "features": ["Authentication", "CRUD Operations", "Real-time Updates"]
-            },
-            {
-                "id": "ecommerce", 
-                "title": "🛒 E-commerce Platform",
-                "description": "Create a full-featured e-commerce platform with product catalog, shopping cart, and payment integration",
-                "expected_duration": "4 minutes",
-                "features": ["Product Catalog", "Shopping Cart", "Payment Integration"]
-            },
-            {
-                "id": "chat-app",
-                "title": "💬 Real-time Chat Application", 
-                "description": "Develop a real-time chat application with WebSocket support, user presence, and message history",
-                "expected_duration": "3.5 minutes",
-                "features": ["WebSocket Support", "User Presence", "Message History"]
+                "type": "Enhancement",
+                "priority": "Medium",
+                "description": "Consider using a more efficient algorithm for data processing.",
+                "implementation": "Refactor the 'process_data' function to use a hash map for lookups."
             }
         ]
-    }
-
-@app.get("/api/demo/live-metrics")
-async def get_demo_live_metrics():
-    return {
-        "live_stats": {
-            "agents_active": 7,
-            "workflows_completed": 142,
-            "lines_of_code_generated": 15847,
-            "security_vulnerabilities_prevented": 23,
-            "tests_generated": 293,
-            "documentation_pages_created": 67,
-            "developer_time_saved_hours": 89.5
-        },
-        "real_time_activity": [
-            "🎯 Generated TaskMaster Pro project scope",
-            "⚡ Optimized React component performance", 
-            "🔒 Detected and fixed security vulnerability",
-            "📝 Created comprehensive API documentation",
-            "🧪 Generated 15 unit tests for payment service"
-        ],
-        "performance_metrics": {
-            "average_response_time": "1.2s",
-            "success_rate": "97.8%",
-            "agent_utilization": "84%",
-            "queue_length": 3
-        }
     }
 
 # Health check for frontend
 @app.get("/api/health")
 async def health_check():
+    """Health check endpoint"""
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),

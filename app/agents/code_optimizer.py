@@ -8,6 +8,9 @@ import httpx
 from typing import Dict, List, Any, Optional, Tuple
 from collections import defaultdict
 from app.core.ai_service import ai_service
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CodeOptimizer:
     """Advanced Agent for analyzing code and providing optimization suggestions with performance metrics."""
@@ -35,57 +38,59 @@ class CodeOptimizer:
             "go": {"avg_speedup": 1.6, "memory_reduction": 12},
         }
     
-    async def optimize_code(self, code: str, language: str, focus_areas: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Analyze code and provide optimization suggestions with performance metrics.
-        
-        Args:
-            code: The source code to analyze
-            language: The programming language of the code
-            focus_areas: Optional list of specific optimization areas to focus on
-            
-        Returns:
-            Dictionary containing optimization suggestions with metrics
+    async def analyze_file_and_get_optimizations(self, file_path: str, file_content: str, agent_id: int = 1, task_id: int = 1) -> Dict[str, Any]:
         """
-        start_time = time.time()
+        Analyzes a single file and returns optimization suggestions.
+        """
+        language = self._detect_language(file_path)
+        prompt = self._construct_optimization_prompt(file_content, language)
         
-        # If no specific focus areas provided, analyze all categories
-        if not focus_areas:
-            focus_areas = list(self.categories.keys())
+        try:
+            ai_result = await self.ai_service.generate_text(
+                prompt=prompt,
+                agent_id=agent_id,
+                task_id=task_id
+            )
             
-        # Analyze code complexity and generate metrics
-        complexity_metrics = self._analyze_code_complexity(code, language)
-        
-        # Generate the prompt for the AI
-        prompt = self._generate_optimization_prompt(code, language, focus_areas, complexity_metrics)
-        
-        # Get optimization suggestions from AI
-        optimization_content = await self._get_ai_suggestions(prompt, language)
-        
-        # Parse the AI response with enhanced metrics
-        result = self._parse_optimization_response(optimization_content)
-        
-        # Calculate optimization score and projections
-        optimization_score = self._calculate_optimization_score(result, focus_areas)
-        performance_projections = self._generate_performance_projections(language, optimization_score)
-        
-        analysis_time = time.time() - start_time
-        
-        return {
-            "status": "success",
-            "message": "Advanced code optimization analysis completed",
-            "analysis_time_ms": round(analysis_time * 1000, 2),
-            "complexity_metrics": complexity_metrics,
-            "optimization_score": optimization_score,
-            "performance_projections": performance_projections,
-            "optimizations": result,
-            "recommendations_summary": {
-                "total_issues": len(result.get("performance", [])) + len(result.get("memory_usage", [])),
-                "critical_issues": self._count_critical_issues(result),
-                "estimated_improvement": f"{performance_projections['estimated_speedup']}x faster",
-                "memory_savings": f"{performance_projections['memory_reduction']}% less memory"
+            response_content = ai_result.get("content", "")
+            
+            try:
+                # Assuming the AI returns a JSON string with suggestions
+                optimizations = json.loads(response_content)
+            except json.JSONDecodeError:
+                logger.warning(f"Could not parse JSON from AI response for {file_path}. Using raw content.")
+                optimizations = {"raw_suggestions": response_content}
+
+            # Post-process and add metadata
+            optimizations["file_path"] = file_path
+            optimizations["language"] = language
+            
+            return optimizations
+
+        except Exception as e:
+            logger.error(f"Error getting optimizations for {file_path}: {e}", exc_info=True)
+            return {
+                "error": f"Failed to get AI optimizations: {e}",
+                "file_path": file_path,
+                "language": language
             }
-        }
-    
+
+    def _construct_optimization_prompt(self, code: str, language: str) -> str:
+        """Construct the optimization prompt for the AI."""
+        # Implementation of _construct_optimization_prompt method
+        # This method should return a properly formatted prompt string
+        # based on the code and language.
+        # For now, we'll return a placeholder string.
+        return "Placeholder prompt"
+
+    def _detect_language(self, file_path: str) -> str:
+        """Detect the programming language of the code."""
+        # Implementation of _detect_language method
+        # This method should return the detected programming language
+        # based on the file path.
+        # For now, we'll return a placeholder string.
+        return "Placeholder language"
+
     def _analyze_code_complexity(self, code: str, language: str) -> Dict[str, Any]:
         """Analyze code complexity and generate metrics."""
         metrics = {
@@ -219,142 +224,41 @@ class CodeOptimizer:
         
         return prompt
     
-    async def _get_ai_suggestions(self, prompt: str, language: str) -> str:
-        """Get optimization suggestions from AI service.
-        
-        Args:
-            prompt: The prompt to send to the AI
-            language: The programming language (used to determine best model)
-            
-        Returns:
-            The AI-generated optimization suggestions
-        """
-        try:
-            system_prompt = f"You are an expert {language} code optimization specialist. Analyze code and provide specific, actionable optimization suggestions with clear before/after examples. Format your response with clear sections for each optimization category."
-            
-            response = await self.ai_service.generate_response(
-                prompt=f"{system_prompt}\n\n{prompt}",
-                max_tokens=2000,
-                temperature=0.1
-            )
-            
-            return response
-                    
-        except Exception as e:
-            print(f"Error calling AI service: {str(e)}")
-            # Fallback to mock response if AI fails
-            return self._get_fallback_response(language)
-    
-    def _get_fallback_response(self, language: str) -> str:
-        """Fallback response when API calls fail."""
-        return f"""# Code Optimization Analysis for {language}
-
-## Performance Optimizations
-
-### 1. Inefficient Loop Structure
-**Original Code:**
-```{language}
-# Example inefficient code pattern
-result = []
-for i in range(len(data)):
-    result.append(data[i] * 2)
-```
-
-**Suggested Optimization:**
-```{language}
-# Use list comprehension instead
-result = [item * 2 for item in data]
-```
-
-**Benefit:** Approximately 30% faster execution time for large datasets. List comprehensions are optimized at the C level in Python.
-
-## Memory Usage Optimizations
-
-### 1. Unnecessary Data Duplication
-**Original Code:**
-```{language}
-# Creating duplicate data
-full_data = original_data.copy()
-processed = process_data(full_data)
-```
-
-**Suggested Optimization:**
-```{language}
-# Process data in-place when possible
-processed = process_data(original_data)
-```
-
-**Benefit:** Reduces memory usage by avoiding duplicate data structures, especially important for large datasets.
-
-## Code Quality Improvements
-
-### 1. Complex Conditional Logic
-**Original Code:**
-```{language}
-if condition1 and condition2 and (condition3 or (condition4 and condition5)):
-    # Complex nested logic
-```
-
-**Suggested Optimization:**
-```{language}
-# Break down complex conditions
-if condition1 and condition2:
-    if condition3 or (condition4 and condition5):
-        # Clearer logic flow
-```
-
-**Benefit:** Improved readability and maintainability, easier debugging and testing.
-"""
-    
     def _parse_optimization_response(self, content: str) -> Dict[str, Any]:
-        """Parse the AI-generated optimization response into structured data.
-        
-        Args:
-            content: The AI-generated optimization content
-            
-        Returns:
-            Structured optimization suggestions
-        """
-        result = {
-            "summary": "",
-            "performance_optimizations": [],
-            "memory_optimizations": [],
-            "code_quality_improvements": [],
-            "algorithm_improvements": [],
-            "resource_optimizations": []
-        }
+        """Parse the AI's optimization response into a structured format."""
+        optimizations = defaultdict(list)
         
         # Extract summary (first paragraph)
         summary_match = re.search(r'^(.*?)\n\n', content, re.DOTALL)
         if summary_match:
-            result["summary"] = summary_match.group(1).strip()
+            optimizations["summary"] = summary_match.group(1).strip()
         
         # Extract performance optimizations
-        result["performance_optimizations"] = self._extract_optimizations(
+        optimizations["performance_optimizations"] = self._extract_optimizations(
             content, r'## Performance Optimizations\n\n(.*?)(?:\n##|$)', 'performance'
         )
         
         # Extract memory optimizations
-        result["memory_optimizations"] = self._extract_optimizations(
+        optimizations["memory_optimizations"] = self._extract_optimizations(
             content, r'## Memory Usage Optimizations\n\n(.*?)(?:\n##|$)', 'memory'
         )
         
         # Extract code quality improvements
-        result["code_quality_improvements"] = self._extract_optimizations(
+        optimizations["code_quality_improvements"] = self._extract_optimizations(
             content, r'## Code Quality Improvements\n\n(.*?)(?:\n##|$)', 'quality'
         )
         
         # Extract algorithm improvements
-        result["algorithm_improvements"] = self._extract_optimizations(
+        optimizations["algorithm_improvements"] = self._extract_optimizations(
             content, r'## Algorithm Complexity\n\n(.*?)(?:\n##|$)', 'algorithm'
         )
         
         # Extract resource optimizations
-        result["resource_optimizations"] = self._extract_optimizations(
+        optimizations["resource_optimizations"] = self._extract_optimizations(
             content, r'## Resource Utilization\n\n(.*?)(?:\n##|$)', 'resource'
         )
         
-        return result
+        return optimizations
     
     def _extract_optimizations(self, content: str, pattern: str, category: str) -> List[Dict[str, str]]:
         """Extract optimization suggestions for a specific category.

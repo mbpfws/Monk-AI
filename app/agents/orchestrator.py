@@ -67,7 +67,7 @@ class AgentOrchestrator:
         language = context.get("programming_language", "python")
         
         # Generate project scope
-        project_scope = self.ideation_agent.generate_project_scope(description)
+        project_scope = await self.ideation_agent.generate_project_scope(description)
         
         # Generate user stories
         user_stories = await self.ideation_agent.generate_user_stories(project_scope)
@@ -89,7 +89,7 @@ class AgentOrchestrator:
 • Deployment: {technical_specs.get('deployment', 'Not specified')}
 
 👥 USER STORIES ({len(user_stories)} total):
-{chr(10).join([f"• {story}" for story in user_stories[:5]])}
+{chr(10).join([f"• {story.get('title', 'Untitled Story')}" for story in user_stories[:5]])}
 {'...' if len(user_stories) > 5 else ''}
 
 🔧 DEVELOPMENT APPROACH:
