@@ -9,6 +9,20 @@ from typing import Dict, Any, Optional, List
 import asyncio
 import json
 
+from .core.database import engine, Base
+
+def init_db():
+    """Initialize the database and create tables."""
+    try:
+        print("🚀 Initializing database...")
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database initialized successfully.")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+
+# Initialize database on startup
+init_db()
+
 # Load environment variables
 load_dotenv()
 
@@ -340,8 +354,8 @@ async def review_pr(request: PRReviewRequest):
             },
             "security_concerns": [],
             "performance_issues": []
-        },
-        "suggestions": [
+            },
+            "suggestions": [
             {
                 "type": "Enhancement",
                 "priority": "Medium",

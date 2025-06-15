@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
-from app.models.review import ReviewType, ReviewStatus
+from app.models.review import ReviewType
 
 
 # Shared properties
@@ -18,7 +18,7 @@ class ReviewCreate(ReviewBase):
 
 # Properties to receive on item update
 class ReviewUpdate(BaseModel):
-    status: Optional[ReviewStatus] = None
+    type: Optional[ReviewType] = None
     comment: Optional[str] = None
     suggested_code: Optional[str] = None
 
@@ -27,10 +27,10 @@ class ReviewUpdate(BaseModel):
 class ReviewInDBBase(ReviewBase):
     id: int
     user_id: int
-    status: ReviewStatus = ReviewStatus.PENDING
+    type: ReviewType = ReviewType.COMMENT
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Properties to return to client

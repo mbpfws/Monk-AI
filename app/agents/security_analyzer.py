@@ -5,7 +5,9 @@ import asyncio
 import time
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
-from app.core.ai_service import ai_service
+from sqlalchemy.orm import Session
+from app.core.ai_service import AIService
+from app.core.database import SessionLocal
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,10 +15,10 @@ logger = logging.getLogger(__name__)
 class SecurityAnalyzer:
     """Advanced Agent for analyzing code for security vulnerabilities with OWASP Top 10 categorization."""
     
-    def __init__(self):
+    def __init__(self, db_session: Session = None):
         """Initialize the SecurityAnalyzer agent."""
-        # Use centralized AI service (OpenAI only for hackathon)
-        self.ai_service = ai_service
+        self.db_session = db_session or SessionLocal()
+        self.ai_service = AIService(session=self.db_session)
         
         # OWASP Top 10 2023 categories with detailed descriptions
         self.owasp_categories = {

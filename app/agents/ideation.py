@@ -4,17 +4,19 @@ import re
 import json
 from typing import Dict, List, Any, Optional
 import logging
-from app.core.ai_service import ai_service
+from sqlalchemy.orm import Session
+from app.core.ai_service import AIService
+from app.core.database import SessionLocal
 
 logger = logging.getLogger(__name__)
 
 class Ideation:
     """Agent for generating project ideas, specifications, user stories, and sprint plans."""
     
-    def __init__(self):
+    def __init__(self, db_session: Session = None):
         """Initialize the Ideation agent."""
-        # Use centralized AI service (OpenAI only for hackathon)
-        self.ai_service = ai_service
+        self.db_session = db_session or SessionLocal()
+        self.ai_service = AIService(session=self.db_session)
         
         # Define project scope templates
         self.scope_templates = {

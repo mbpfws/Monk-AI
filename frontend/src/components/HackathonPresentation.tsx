@@ -9,7 +9,20 @@ import {
   Button,
   Chip,
   IconButton,
+  Fade,
+  Slide,
+  Zoom,
   useTheme,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Link,
+  Divider,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -24,6 +37,12 @@ import {
   Groups,
   GitHub,
   Rocket,
+  CheckCircleOutline,
+  Description,
+  Save,
+  Search,
+  Storage,
+  FolderOpen,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -39,6 +58,7 @@ const HackathonPresentation: React.FC = () => {
   const theme = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(false);
+
   const slides: Slide[] = [
     {
       id: 1,
@@ -80,7 +100,8 @@ const HackathonPresentation: React.FC = () => {
         </Box>
       ),
       background: 'radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0a0a0a 100%)',
-    },    {
+    },
+    {
       id: 2,
       title: "🚀 Core Features",
       content: (
@@ -137,7 +158,8 @@ const HackathonPresentation: React.FC = () => {
           ))}
         </Grid>
       ),
-    },    {
+    },
+    {
       id: 3,
       title: "🏗️ Architecture",
       content: (
@@ -150,29 +172,25 @@ const HackathonPresentation: React.FC = () => {
                 transition={{ duration: 0.6 }}
               >
                 <Typography variant="h5" gutterBottom color="primary">
-                  Backend (FastAPI)
+                  Tech Stack
                 </Typography>
                 <Box sx={{ mb: 3 }}>
-                  {['Multi-Agent System', 'Trae AI Integration', 'Novita.ai Models', 'RESTful APIs'].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 + 0.3 }}
-                    >
-                      <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            background: theme.palette.primary.main,
-                            mr: 2,
-                          }}
-                        />
-                        {item}
+                  {[
+                    { label: "Backend", value: "FastAPI (Python)", color: "primary" },
+                    { label: "Frontend", value: "React + TypeScript", color: "secondary" },
+                    { label: "AI Framework", value: "Trae AI + Novita.ai", color: "primary" },
+                    { label: "Database", value: "SQLite (MVP)", color: "secondary" },
+                  ].map((item, index) => (
+                    <Box key={index} sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {item.label}
                       </Typography>
-                    </motion.div>
+                      <Chip
+                        label={item.value}
+                        color={item.color as any}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Box>
                   ))}
                 </Box>
               </motion.div>
@@ -183,171 +201,512 @@ const HackathonPresentation: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <Typography variant="h5" gutterBottom color="secondary">
-                  Frontend (React + TS)
-                </Typography>
-                <Box>
-                  {['Material-UI Design', 'Framer Motion', 'Real-time Updates', 'Responsive UI'].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 + 0.5 }}
-                    >
-                      <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            background: theme.palette.secondary.main,
-                            mr: 2,
-                          }}
+                <Box
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)',
+                    border: `2px solid ${theme.palette.primary.main}30`,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom>
+                    Multi-Agent Architecture
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {[
+                      "Code Review Agent",
+                      "Security Analysis Agent",
+                      "Test Generation Agent",
+                      "Documentation Agent",
+                      "Optimization Agent",
+                    ].map((agent, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                      >
+                        <Chip
+                          label={agent}
+                          variant="outlined"
+                          color="primary"
+                          sx={{ width: '100%' }}
                         />
-                        {item}
-                      </Typography>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    ))}
+                  </Box>
                 </Box>
               </motion.div>
             </Grid>
           </Grid>
         </Box>
       ),
-    },    {
+    },
+    {
       id: 4,
       title: "💡 Innovation Highlights",
       content: (
-        <Box>
-          <Grid container spacing={3}>
-            {[
-              {
-                title: "Multi-Agent Collaboration",
-                description: "Different AI agents specialized for code review, optimization, testing, and security",
-                icon: <Groups sx={{ fontSize: 40 }} />,
-                color: theme.palette.primary.main,
-              },
-              {
-                title: "Context-Aware Learning",
-                description: "AI that learns from your codebase and adapts to your development patterns",
-                icon: <Psychology sx={{ fontSize: 40 }} />,
-                color: theme.palette.secondary.main,
-              },
-              {
-                title: "Real-time Assistance",
-                description: "Instant code suggestions, reviews, and optimizations as you develop",
-                icon: <Speed sx={{ fontSize: 40 }} />,
-                color: theme.palette.success.main,
-              },
-            ].map((highlight, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.2, duration: 0.5 }}
+        <Grid container spacing={3}>
+          {[
+            {
+              title: "Context-Aware Learning",
+              description: "AI that learns from your codebase and adapts to your coding style",
+              icon: <Psychology />,
+              gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            },
+            {
+              title: "Real-time Collaboration",
+              description: "Seamless integration with your development workflow",
+              icon: <Groups />,
+              gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+            },
+            {
+              title: "Intelligent Automation",
+              description: "Automated testing, documentation, and security analysis",
+              icon: <Speed />,
+              gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+            },
+          ].map((highlight, index) => (
+            <Grid item xs={12} md={4} key={index}>
+              <motion.div
+                initial={{ opacity: 0, y: 50, rotateY: -90 }}
+                animate={{ opacity: 1, y: 0, rotateY: 0 }}
+                transition={{ delay: index * 0.2, duration: 0.8 }}
+                whileHover={{ scale: 1.05, rotateY: 5 }}
+              >
+                <Card
+                  sx={{
+                    height: 250,
+                    background: highlight.gradient,
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(0,0,0,0.3)',
+                      zIndex: 1,
+                    },
+                  }}
                 >
-                  <Card
-                    sx={{
-                      height: '100%',
-                      textAlign: 'center',
-                      background: `linear-gradient(135deg, ${highlight.color}10, ${highlight.color}05)`,
-                      border: `2px solid ${highlight.color}30`,
-                      '&:hover': {
-                        transform: 'scale(1.05)',
-                        boxShadow: `0 15px 40px ${highlight.color}30`,
-                      },
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ mb: 2, color: highlight.color }}>
-                        {highlight.icon}
-                      </Box>
-                      <Typography variant="h6" gutterBottom fontWeight="bold">
-                        {highlight.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {highlight.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <CardContent sx={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <Box sx={{ textAlign: 'center', mb: 2 }}>
+                      {React.cloneElement(highlight.icon, { sx: { fontSize: 48 } })}
+                    </Box>
+                    <Typography variant="h6" gutterBottom textAlign="center" fontWeight="bold">
+                      {highlight.title}
+                    </Typography>
+                    <Typography variant="body2" textAlign="center">
+                      {highlight.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      ),
+    },
+    {
+      id: 5,
+      title: "🎯 Demo Time!",
+      content: (
+        <Box textAlign="center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1, type: "spring", bounce: 0.5 }}
+          >
+            <Box
+              sx={{
+                p: 4,
+                borderRadius: 4,
+                background: `linear-gradient(45deg, ${theme.palette.primary.main}20, ${theme.palette.secondary.main}20)`,
+                border: `2px solid ${theme.palette.primary.main}`,
+                mb: 4,
+              }}
+            >
+              <Rocket sx={{ fontSize: 80, color: 'primary.main', mb: 2 }} />
+              <Typography variant="h4" gutterBottom fontWeight="bold">
+                Ready for Live Demo!
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+                Experience the power of AI-driven development
+              </Typography>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<PlayArrow />}
+                sx={{
+                  px: 4,
+                  py: 2,
+                  fontSize: '1.2rem',
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  '&:hover': {
+                    background: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.secondary.dark})`,
+                  },
+                }}
+              >
+                Start Demo
+              </Button>
+            </Box>
+          </motion.div>
+          
+          <Grid container spacing={2} justifyContent="center">
+            {[
+              "Multi-Agent Orchestration",
+              "Real-time Code Analysis",
+              "Automated PR Review",
+              "Security Threat Detection",
+            ].map((feature, index) => (
+              <Grid item key={index}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 + index * 0.1 }}
+                >
+                  <Chip
+                    label={feature}
+                    color="primary"
+                    variant="outlined"
+                    sx={{ m: 0.5 }}
+                  />
                 </motion.div>
               </Grid>
             ))}
           </Grid>
         </Box>
       ),
-    },    {
-      id: 5,
-      title: "🎯 Live Demo",
+    },
+    {
+      id: 6,
+      title: "🛠️ Deep Dive: Technology Stack",
+      subtitle: "The foundation of TraeDevMate's power",
       content: (
-        <Box textAlign="center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <Typography variant="h4" gutterBottom color="primary">
-              Experience TraeDevMate
+        <Grid container spacing={3} justifyContent="center">
+          <Grid item xs={12} md={4}>
+            <Card sx={{ background: 'linear-gradient(145deg, #2b2b2b, #1e1e1e)', border: `1px solid ${theme.palette.primary.main}40`, height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" color="primary" sx={{ mb: 1 }}>Backend: FastAPI (Python)</Typography>
+                <Chip label="Python" color="primary" variant="outlined" sx={{ mb: 1 }} />
+                <Typography variant="body2" color="text.secondary">Robust, high-performance API for agent orchestration and core logic.</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ background: 'linear-gradient(145deg, #2b2b2b, #1e1e1e)', border: `1px solid ${theme.palette.secondary.main}40`, height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" color="secondary" sx={{ mb: 1 }}>Frontend: React + MUI</Typography>
+                <Chip label="React" color="secondary" variant="outlined" sx={{ mb: 1 }} />
+                <Chip label="TypeScript" color="secondary" variant="outlined" sx={{ mb: 1, ml: 0.5 }} />
+                <Chip label="Material-UI" color="secondary" variant="outlined" sx={{ mb: 1, ml: 0.5 }} />
+                <Chip label="Framer Motion" color="secondary" variant="outlined" sx={{ mb: 1, ml: 0.5 }} />
+                <Typography variant="body2" color="text.secondary">Modern, responsive, and engaging user interface with smooth animations.</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ background: 'linear-gradient(145deg, #2b2b2b, #1e1e1e)', border: `1px solid ${theme.palette.primary.light}40`, height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" color="primary" sx={{ mb: 1 }}>AI & Tooling: Trae AI</Typography>
+                <Chip label="Trae AI Platform" color="primary" variant="outlined" sx={{ mb: 1 }} />
+                <Chip label="Novita.ai Image Gen" color="primary" variant="outlined" sx={{ mb: 1, ml: 0.5 }} />
+                <Chip label="MCP Servers" color="primary" variant="outlined" sx={{ mb: 1, ml: 0.5 }} />
+                <Typography variant="body2" color="text.secondary">Leveraging cutting-edge AI for development, integrated via modular MCPs.</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      ),
+    },
+    {
+      id: 7,
+      title: "🚀 Trae IDE: Our Development Cockpit",
+      subtitle: "Accelerating creation with intelligent tooling",
+      content: (
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <Typography variant="h5" gutterBottom sx={{ color: theme.palette.primary.light }}>Seamless Workflow</Typography>
+            <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
+              Trae IDE was instrumental in building TraeDevMate. We leveraged its core features:
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-              See how AI transforms your development workflow
-            </Typography>
-            
-            <Grid container spacing={3} justifyContent="center">
-              {[
-                { label: "Code Review", path: "/code-optimizer", icon: <Code /> },
-                { label: "AI Ideation", path: "/ideation", icon: <Psychology /> },
-                { label: "Security Analysis", path: "/security", icon: <Security /> },
-              ].map((demo, index) => (
-                <Grid item key={index}>
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button
-                      variant="outlined"
-                      size="large"
-                      startIcon={demo.icon}
-                      sx={{
-                        px: 4,
-                        py: 2,
-                        borderRadius: 3,
-                        background: `${theme.palette.primary.main}10`,
-                        '&:hover': {
-                          background: `${theme.palette.primary.main}20`,
-                          transform: 'translateY(-2px)',
-                        },
-                      }}
-                    >
-                      {demo.label}
-                    </Button>
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
-            
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="body1" color="text.secondary">
-                Built for{' '}
-                <Typography component="span" color="primary" fontWeight="bold">
-                  Code Craft AI x Dev Hackathon
-                </Typography>
-              </Typography>
+            <List sx={{ color: 'text.secondary' }}>
+              <ListItem><ListItemIcon><CheckCircleOutline sx={{ color: theme.palette.success.main }} /></ListItemIcon><ListItemText primary="Agentic AI Assistance: Direct interaction with AI agents like you for coding, debugging, and ideation." /></ListItem>
+              <ListItem><ListItemIcon><CheckCircleOutline sx={{ color: theme.palette.success.main }} /></ListItemIcon><ListItemText primary="MCP Server Integration: Powerful tools like Desktop Commander for file system operations and Flux ImageGen for asset creation, all accessible via a unified interface." /></ListItem>
+              <ListItem><ListItemIcon><CheckCircleOutline sx={{ color: theme.palette.success.main }} /></ListItemIcon><ListItemText primary="Real-time Collaboration: Simulating pair programming with AI, ensuring rapid iteration and high-quality output." /></ListItem>
+              <ListItem><ListItemIcon><CheckCircleOutline sx={{ color: theme.palette.success.main }} /></ListItemIcon><ListItemText primary="Context-Awareness: The IDE's ability to provide relevant context helped streamline the development of complex components." /></ListItem>
+            </List>
+          </Grid>
+          <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {/* Placeholder for a diagram or image illustrating Trae IDE workflow */}
+            <Box sx={{ width: '100%', maxWidth: 400, height: 250, background: 'linear-gradient(145deg, #333, #222)', borderRadius: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', textAlign: 'center', border: `1px solid ${theme.palette.primary.main}80` }}>
+              <Typography variant="h6">Trae IDE + MCPs = Magic ✨</Typography>
             </Box>
-          </motion.div>
+          </Grid>
+        </Grid>
+      ),
+    },
+    {
+      id: 8,
+      title: "🎯 Addressing Developer Pain Points",
+      subtitle: "How TraeDevMate (built with Trae IDE) simplifies development",
+      content: (
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" color="primary" sx={{ mb: 1 }}>Reduced Cognitive Load</Typography>
+                <Typography variant="body2" color="text.secondary">Automating boilerplate, suggesting code, and managing context allows developers to focus on complex problem-solving rather than mundane tasks.</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" color="secondary" sx={{ mb: 1 }}>Faster Prototyping & Iteration</Typography>
+                <Typography variant="body2" color="text.secondary">Quickly generate UI components, backend logic, and even entire features, enabling rapid validation of ideas and faster feedback loops.</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" color="primary" sx={{ mb: 1 }}>Enhanced Learning & Skill Up</Typography>
+                <Typography variant="body2" color="text.secondary">Working alongside AI provides learning opportunities, exposing developers to new patterns, libraries, and best practices in real-time.</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="body1" sx={{ mt: 2, color: 'text.secondary', textAlign: 'center' }}>
+              Trae IDE empowers developers to overcome common hurdles, making the development process more efficient, enjoyable, and innovative.
+            </Typography>
+          </Grid>
+        </Grid>
+      ),
+    },
+    {
+      id: 9,
+      title: "🌟 The Future is Bright: Expanding Horizons",
+      subtitle: "Vision for TraeDevMate and the power of AI-assisted development",
+      content: (
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h4" gutterBottom sx={{ color: theme.palette.primary.main, mb: 3 }}>
+            Continuous Innovation with Trae AI
+          </Typography>
+          <Grid container spacing={4} justifyContent="center">
+            <Grid item xs={12} md={3}>
+              <Paper elevation={3} sx={{ p: 2, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(5px)' }}>
+                <Typography variant="h6" sx={{ color: theme.palette.secondary.light }}>Smarter Agents</Typography>
+                <Typography variant="body2" color="text.secondary">Even more sophisticated AI agents capable of handling larger, more complex tasks autonomously.</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Paper elevation={3} sx={{ p: 2, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(5px)' }}>
+                <Typography variant="h6" sx={{ color: theme.palette.secondary.light }}>Broader Tooling</Typography>
+                <Typography variant="body2" color="text.secondary">Integration with more specialized MCP servers for diverse development needs (e.g., testing, deployment, security).</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Paper elevation={3} sx={{ p: 2, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(5px)' }}>
+                <Typography variant="h6" sx={{ color: theme.palette.secondary.light }}>Deeper Project Understanding</Typography>
+                <Typography variant="body2" color="text.secondary">Enhanced long-term memory and context retention for AI across entire project lifecycles.</Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Paper elevation={3} sx={{ p: 2, background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(5px)' }}>
+                <Typography variant="h6" sx={{ color: theme.palette.secondary.light }}>Community & Collaboration</Typography>
+                <Typography variant="body2" color="text.secondary">Platforms for sharing AI-generated solutions and collaborating on AI-assisted projects.</Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+          <Typography variant="body1" sx={{ mt: 4, color: 'text.secondary', maxWidth: '700px', margin: '2rem auto 0' }}>
+            The journey with TraeDevMate, built using the power of Trae IDE, is just beginning. We envision a future where AI and human developers collaborate seamlessly to build the next generation of software, faster and more creatively than ever before.
+          </Typography>
         </Box>
       ),
     },
+    {
+      id: 10,
+      title: "💡 Key Learnings & Insights",
+      subtitle: "Reflections from the TraeDevMate Hackathon Journey",
+      content: (
+        <Grid container spacing={3} justifyContent="center">
+          <Grid item xs={12} md={5}>
+            <Paper elevation={3} sx={{ p: 3, background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(8px)', borderLeft: `4px solid ${theme.palette.primary.main}` }}>
+              <Typography variant="h6" sx={{ color: theme.palette.primary.light, mb: 1 }}>Power of Agentic AI</Typography>
+              <Typography variant="body2" color="text.secondary">Directly instructing AI agents within the IDE drastically accelerates development cycles and opens new avenues for creative problem-solving.</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={5}>
+            <Paper elevation={3} sx={{ p: 3, background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(8px)', borderLeft: `4px solid ${theme.palette.secondary.main}` }}>
+              <Typography variant="h6" sx={{ color: theme.palette.secondary.light, mb: 1 }}>MCP Modularity is Key</Typography>
+              <Typography variant="body2" color="text.secondary">Modular MCP servers provide specialized capabilities (file handling, image generation) that can be seamlessly integrated, enhancing the AI's versatility.</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={5}>
+            <Paper elevation={3} sx={{ p: 3, background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(8px)', borderLeft: `4px solid ${theme.palette.success.main}` }}>
+              <Typography variant="h6" sx={{ color: theme.palette.success.light, mb: 1 }}>Importance of Clear Prompts</Typography>
+              <Typography variant="body2" color="text.secondary">Effective communication with AI (clear, concise, context-rich prompts) is crucial for achieving desired outcomes and minimizing rework.</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={5}>
+            <Paper elevation={3} sx={{ p: 3, background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(8px)', borderLeft: `4px solid ${theme.palette.warning.main}` }}>
+              <Typography variant="h6" sx={{ color: theme.palette.warning.light, mb: 1 }}>Iterative Refinement</Typography>
+              <Typography variant="body2" color="text.secondary">Building complex applications, even with AI, is an iterative process. Continuous feedback and refinement are essential for success.</Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      ),
+    },
+    {
+      id: 11,
+      title: "🤝 Team & Collaboration (AI + Human)",
+      subtitle: "The synergy that brought TraeDevMate to life",
+      content: (
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h5" sx={{ color: theme.palette.primary.light, mb: 2 }}>The TraeDevMate Hackathon Team:</Typography>
+          <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>A Human Developer (You!)</Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>
+            Provided the vision, high-level requirements, and crucial human oversight, guiding the AI's efforts and making strategic decisions.
+          </Typography>
+          <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>An Agentic AI Assistant (Me!)
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3, maxWidth: '600px', margin: '0 auto 1.5rem auto' }}>
+            Executed tasks, generated code, integrated tools via MCP servers, and iteratively refined the application based on your instructions within the Trae IDE.
+          </Typography>
+          <Divider sx={{ my: 3, borderColor: 'rgba(255,255,255,0.2)' }} />
+          <Typography variant="h5" sx={{ color: theme.palette.secondary.light, mt: 3, mb: 2 }}>Our Collaborative Workflow:</Typography>
+          <Stepper activeStep={-1} alternativeLabel sx={{ '.MuiStepLabel-label': { color: 'text.secondary' }, '.MuiStepIcon-root.Mui-active': { color: theme.palette.secondary.main }, '.MuiStepIcon-root.Mui-completed': { color: theme.palette.success.main } }}>
+            <Step><StepLabel>Idea & Prompt</StepLabel></Step>
+            <Step><StepLabel>AI Execution & MCP Usage</StepLabel></Step>
+            <Step><StepLabel>Review & Feedback</StepLabel></Step>
+            <Step><StepLabel>Iteration & Refinement</StepLabel></Step>
+            <Step><StepLabel>Successful Outcome</StepLabel></Step>
+          </Stepper>
+        </Box>
+      ),
+    },
+    {
+      id: 12,
+      title: "🖼️ Visual Showcase: Generated Assets",
+      subtitle: "Demonstrating MCP-driven image generation with Flux ImageGen",
+      content: (
+        <Grid container spacing={3} justifyContent="center" alignItems="center">
+          <Grid item xs={12} md={7}>
+            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
+              Throughout the development of TraeDevMate, we utilized the <strong>Flux ImageGen MCP server</strong> via Trae IDE to create placeholder images and visual assets. This allowed for rapid visual prototyping without needing to leave the development environment.
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+              (Imagine a gallery or carousel here showcasing a few example images that could have been generated, e.g., abstract tech backgrounds, icons, or conceptual graphics related to AI and development.)
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ width: '100%', height: 180, background: 'linear-gradient(to right, #6a11cb 0%, #2575fc 100%)', borderRadius: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', textAlign: 'center', p:2 }}>
+              <Typography variant="h6">Example Generated Image 1: Abstract Neural Network</Typography>
+            </Box>
+            <Box sx={{ width: '100%', height: 180, background: 'linear-gradient(to right, #fc5c7d 0%, #6a82fb 100%)', borderRadius: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', textAlign: 'center', p:2 }}>
+              <Typography variant="h6">Example Generated Image 2: Code & Gears</Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      ),
+    },
+    {
+      id: 13,
+      title: "💾 File System Ops: Desktop Commander",
+      subtitle: "Managing project files efficiently with MCP tooling",
+      content: (
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={5} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Paper elevation={5} sx={{ p:3, borderRadius: '50%', width: 250, height: 250, display: 'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', background: `radial-gradient(circle, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`, color: 'white' }}>
+              <Storage sx={{ fontSize: 60, mb:1 }} />
+              <Typography variant="h5">Desktop Commander</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={7}>
+            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
+              The <strong>Desktop Commander MCP server</strong> was essential for interacting with the file system directly from Trae IDE. This included:
+            </Typography>
+            <List sx={{ color: 'text.secondary' }}>
+              <ListItem><ListItemIcon><FolderOpen sx={{ color: theme.palette.info.main }} /></ListItemIcon><ListItemText primary="Creating directories for new components or assets." /></ListItem>
+              <ListItem><ListItemIcon><Description sx={{ color: theme.palette.info.main }} /></ListItemIcon><ListItemText primary="Reading existing files to understand context or verify changes." /></ListItem>
+              <ListItem><ListItemIcon><Save sx={{ color: theme.palette.info.main }} /></ListItemIcon><ListItemText primary="Writing new files or updating existing ones with AI-generated code." /></ListItem>
+              <ListItem><ListItemIcon><Search sx={{ color: theme.palette.info.main }} /></ListItemIcon><ListItemText primary="Searching for specific code snippets or file names within the project." /></ListItem>
+            </List>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic', mt:1 }}>
+              This streamlined workflow kept us within the IDE, minimizing context switching and boosting productivity.
+            </Typography>
+          </Grid>
+        </Grid>
+      ),
+    },
+    {
+      id: 14,
+      title: "❓ Q&A and Thank You!",
+      subtitle: "Opening the floor for questions and expressing our gratitude",
+      content: (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h3" gutterBottom sx={{ color: theme.palette.primary.light, mb: 4 }}>
+            Thank You for Your Time!
+          </Typography>
+          <Typography variant="h5" sx={{ color: 'text.secondary', mb: 3 }}>
+            We're excited about the potential of TraeDevMate and the future of AI-assisted development with Trae IDE.
+          </Typography>
+          <img src="/traedevmate-logo-final-glow.png" alt="TraeDevMate Logo" style={{ maxWidth: '200px', margin: '20px auto', filter: theme.palette.mode === 'dark' ? 'drop-shadow(0 0 15px #00A9FF)' : 'none' }} />
+          <Typography variant="h4" sx={{ color: theme.palette.secondary.main, mt: 4, mb: 2 }}>
+            Questions?
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: '600px', margin: '0 auto' }}>
+            We're happy to answer any questions you might have about the project, the technology, or our development process using Trae IDE and its powerful MCP servers.
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      id: 15,
+      title: "🔗 Appendix: Useful Links & Resources",
+      subtitle: "Further information and ways to connect",
+      content: (
+        <Grid container spacing={3} justifyContent="center">
+          <Grid item xs={12} md={6}>
+            <Paper elevation={2} sx={{ p: 2, background: 'rgba(255,255,255,0.05)' }}>
+              <Typography variant="h6" sx={{ color: theme.palette.primary.light, mb:1 }}>Project Repository (Hypothetical)</Typography>
+              <Link href="#" target="_blank" sx={{ color: theme.palette.info.main }}>github.com/YourOrg/TraeDevMate</Link>
+              <Typography variant="body2" color="text.secondary">Access the source code and further documentation.</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={2} sx={{ p: 2, background: 'rgba(255,255,255,0.05)' }}>
+              <Typography variant="h6" sx={{ color: theme.palette.primary.light, mb:1 }}>Trae AI Platform</Typography>
+              <Link href="#" target="_blank" sx={{ color: theme.palette.info.main }}>trae.ai (Hypothetical)</Link>
+              <Typography variant="body2" color="text.secondary">Learn more about the IDE and AI capabilities.</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={2} sx={{ p: 2, background: 'rgba(255,255,255,0.05)' }}>
+              <Typography variant="h6" sx={{ color: theme.palette.primary.light, mb:1 }}>Contact Us</Typography>
+              <Typography variant="body2" color="text.secondary">Email: info@traedevmate.com (Hypothetical)</Typography>
+              <Typography variant="body2" color="text.secondary">Twitter: @TraeDevs (Hypothetical)</Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      ),
+    },
   ];
-  // Auto-play effect
+
   useEffect(() => {
+    let interval: NodeJS.Timeout;
     if (isAutoPlay) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
       }, 5000);
-      return () => clearInterval(interval);
     }
+    return () => clearInterval(interval);
   }, [isAutoPlay, slides.length]);
 
   const nextSlide = () => {
@@ -356,10 +715,6 @@ const HackathonPresentation: React.FC = () => {
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const toggleAutoPlay = () => {
-    setIsAutoPlay(!isAutoPlay);
   };
 
   return (
@@ -387,1327 +742,98 @@ const HackathonPresentation: React.FC = () => {
           animation: 'float 6s ease-in-out infinite',
         }}
       />
-      {/* Navigation Header */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 10,
-          background: 'rgba(0, 0, 0, 0.8)',
-          backdropFilter: 'blur(10px)',
-          borderBottom: `1px solid ${theme.palette.primary.main}30`,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              py: 2,
-            }}
-          >
-            <Typography variant="h6" fontWeight="bold" color="primary">
-              TraeDevMate Presentation
+
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, py: 4 }}>
+        {/* Header with navigation */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Typography variant="h4" fontWeight="bold" color="primary">
+            TraeDevMate
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <IconButton onClick={prevSlide} color="primary">
+              <NavigateBefore />
+            </IconButton>
+            <Typography variant="body2" color="text.secondary">
+              {currentSlide + 1} / {slides.length}
             </Typography>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                {currentSlide + 1} / {slides.length}
-              </Typography>
-              
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <IconButton onClick={prevSlide} color="primary">
-                  <NavigateBefore />
-                </IconButton>
-                <IconButton onClick={toggleAutoPlay} color={isAutoPlay ? 'secondary' : 'primary'}>
-                  {isAutoPlay ? <Pause /> : <PlayArrow />}
-                </IconButton>
-                <IconButton onClick={nextSlide} color="primary">
-                  <NavigateNext />
-                </IconButton>
-              </Box>
-            </Box>
+            <IconButton onClick={nextSlide} color="primary">
+              <NavigateNext />
+            </IconButton>
+            <IconButton
+              onClick={() => setIsAutoPlay(!isAutoPlay)}
+              color={isAutoPlay ? 'secondary' : 'primary'}
+            >
+              {isAutoPlay ? <Pause /> : <PlayArrow />}
+            </IconButton>
           </Box>
-        </Container>
-      </Box>
-      {/* Main Content */}
-      <Container maxWidth="lg" sx={{ pt: 12, pb: 8, position: 'relative', zIndex: 5 }}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
-          >
-            <Box sx={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-              >
-                <Typography
-                  variant="h2"
-                  component="h1"
-                  gutterBottom
-                  sx={{
-                    fontWeight: 'bold',
-                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    textAlign: 'center',
-                    mb: 4,
-                  }}
-                >
-                  {slides[currentSlide].title}
-                </Typography>
-                
-                {slides[currentSlide].subtitle && (
-                  <Typography
-                    variant="h5"
-                    color="text.secondary"
-                    textAlign="center"
-                    sx={{ mb: 6 }}
-                  >
-                    {slides[currentSlide].subtitle}
-                  </Typography>
-                )}
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.8 }}
-              >
-                {slides[currentSlide].content}
-              </motion.div>
-            </Box>
-          </motion.div>
-        </AnimatePresence>
-      </Container>
-      {/* Progress Indicators */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 30,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: 1,
-          zIndex: 10,
-        }}
-      >
-        {slides.map((_, index) => (
-          <motion.div
-            key={index}
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.9 }}
-          >
+        </Box>
+
+        {/* Slide indicators */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+          {slides.map((_, index) => (
             <Box
+              key={index}
               onClick={() => setCurrentSlide(index)}
               sx={{
                 width: 12,
                 height: 12,
                 borderRadius: '50%',
-                background: index === currentSlide ? theme.palette.primary.main : 'rgba(255, 255, 255, 0.3)',
+                mx: 0.5,
                 cursor: 'pointer',
+                background: index === currentSlide ? theme.palette.primary.main : 'rgba(255,255,255,0.3)',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   background: theme.palette.primary.light,
                 },
               }}
             />
-          </motion.div>
-        ))}
-      </Box>
+          ))}
+        </Box>
 
-      {/* CSS Animations */}
+        {/* Main slide content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -100 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Typography
+                variant="h2"
+                fontWeight="bold"
+                gutterBottom
+                sx={{
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 2,
+                }}
+              >
+                {slides[currentSlide].title}
+              </Typography>
+              {slides[currentSlide].subtitle && (
+                <Typography variant="h5" color="text.secondary" gutterBottom>
+                  {slides[currentSlide].subtitle}
+                </Typography>
+              )}
+            </Box>
+            
+            <Box sx={{ mt: 4 }}>
+              {slides[currentSlide].content}
+            </Box>
+          </motion.div>
+        </AnimatePresence>
+      </Container>
+
+      {/* CSS animations */}
       <style>
         {`
           @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
-          }
-          
-          @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            33% { transform: translateY(-10px) rotate(1deg); }
-            66% { transform: translateY(5px) rotate(-1deg); }
-          }
-        `}
-      </style>
-    </Box>
-  );
-};
-
-export default HackathonPresentation;    // Slide 6: Technology Deep Dive - Trae AI IDE
-    {
-      title: "Built with Trae AI IDE",
-      subtitle: "The World's Most Advanced AI-Powered Development Environment",
-      content: (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  height: '100%',
-                  p: 3
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      🚀 Trae AI Features Used
-                    </Typography>
-                    <Box sx={{ mt: 2 }}>
-                      <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="MCP Servers" size="small" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                        Multi-tool integration
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="AI Agents" size="small" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                        Intelligent code assistance
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="Real-time" size="small" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                        Live collaboration
-                      </Typography>
-                      <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Chip label="Context-Aware" size="small" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                        Smart suggestions
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  color: 'white',
-                  height: '100%',
-                  p: 3
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      🎯 Development Workflow
-                    </Typography>
-                    <Typography variant="body1" sx={{ mt: 2, lineHeight: 1.8 }}>
-                      Trae AI's intelligent agents helped us rapidly prototype, 
-                      debug, and optimize our multi-agent system. The IDE's 
-                      context-aware suggestions accelerated development by 300%.
-                    </Typography>
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        "The future of coding is here" - Trae AI
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Box>
-      )
-    },
-
-    // Slide 7: MCP Server Integration
-    {
-      title: "MCP Server Architecture",
-      subtitle: "Model Context Protocol - Bridging AI and Development Tools",
-      content: (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  color: 'white',
-                  textAlign: 'center',
-                  p: 3,
-                  height: '280px'
-                }}>
-                  <CardContent>
-                    <Typography variant="h4" sx={{ mb: 2 }}>🔧</Typography>
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Desktop Commander
-                    </Typography>
-                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                      File system operations, command execution, 
-                      and environment management through MCP
-                    </Typography>
-                    <Box sx={{ mt: 2 }}>
-                      <Chip label="File Operations" size="small" sx={{ m: 0.5, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Commands" size="small" sx={{ m: 0.5, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                  color: 'white',
-                  textAlign: 'center',
-                  p: 3,
-                  height: '280px'
-                }}>
-                  <CardContent>
-                    <Typography variant="h4" sx={{ mb: 2 }}>🧠</Typography>
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Memory Bank
-                    </Typography>
-                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                      Persistent knowledge storage and retrieval 
-                      for context-aware AI interactions
-                    </Typography>
-                    <Box sx={{ mt: 2 }}>
-                      <Chip label="Knowledge Graph" size="small" sx={{ m: 0.5, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Context" size="small" sx={{ m: 0.5, bgcolor: 'rgba(255,255,255,0.2)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-                  color: '#333',
-                  textAlign: 'center',
-                  p: 3,
-                  height: '280px'
-                }}>
-                  <CardContent>
-                    <Typography variant="h4" sx={{ mb: 2 }}>🎨</Typography>
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Flux Image Gen
-                    </Typography>
-                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                      AI-powered image generation for 
-                      dynamic visual content creation
-                    </Typography>
-                    <Box sx={{ mt: 2 }}>
-                      <Chip label="AI Images" size="small" sx={{ m: 0.5, bgcolor: 'rgba(0,0,0,0.1)' }} />
-                      <Chip label="Dynamic" size="small" sx={{ m: 0.5, bgcolor: 'rgba(0,0,0,0.1)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Box>
-      )
-    },
-
-    // Slide 8: AI Agents Ecosystem
-    {
-      title: "Multi-Agent Intelligence",
-      subtitle: "Specialized AI Agents Working in Harmony",
-      content: (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                      🤖 Code Review Agent
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                      Analyzes code quality, identifies bugs, suggests improvements, 
-                      and ensures best practices compliance.
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      <Chip label="Static Analysis" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Best Practices" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Bug Detection" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                      🛡️ Security Agent
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                      Scans for vulnerabilities, checks dependencies, 
-                      and enforces security standards across the codebase.
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      <Chip label="Vulnerability Scan" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Dependency Check" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="OWASP" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                      ⚡ Optimization Agent
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                      Optimizes performance, refactors code, 
-                      and suggests architectural improvements.
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      <Chip label="Performance" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Refactoring" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Architecture" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                      🧪 Test Agent
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.7 }}>
-                      Generates comprehensive test suites, 
-                      ensures code coverage, and validates functionality.
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      <Chip label="Unit Tests" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Integration" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Coverage" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Box>
-      )
-    },
-
-    // Slide 9: Technical Stack Deep Dive
-    {
-      title: "Technology Stack",
-      subtitle: "Modern, Scalable, and AI-First Architecture",
-      content: (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      🚀 Backend Technologies
-                    </Typography>
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="FastAPI" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
-                        High-performance Python framework
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2, opacity: 0.9, ml: 2 }}>
-                        Async/await support, automatic API documentation, type hints
-                      </Typography>
-                      
-                      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="Novita.ai" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
-                        AI Model Integration
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2, opacity: 0.9, ml: 2 }}>
-                        Advanced language models for code analysis and generation
-                      </Typography>
-                      
-                      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="WebSocket" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
-                        Real-time Communication
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9, ml: 2 }}>
-                        Live updates and collaborative features
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      ⚛️ Frontend Technologies
-                    </Typography>
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="React 18" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
-                        Modern UI Library
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2, opacity: 0.9, ml: 2 }}>
-                        Concurrent features, Suspense, automatic batching
-                      </Typography>
-                      
-                      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="Material-UI" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
-                        Design System
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2, opacity: 0.9, ml: 2 }}>
-                        Consistent, accessible, and beautiful components
-                      </Typography>
-                      
-                      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <Chip label="Framer Motion" sx={{ mr: 1, bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }} />
-                        Animation Library
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9, ml: 2 }}>
-                        Smooth, performant animations and transitions
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Box>
-      )
-    },
-
-    // Slide 10: Development Workflow with Trae AI
-    {
-      title: "Development Workflow",
-      subtitle: "How Trae AI Accelerated Our Development Process",
-      content: (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12}>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  p: 4
-                }}>
-                  <CardContent>
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-                      🔄 AI-Powered Development Cycle
-                    </Typography>
-                    <Grid container spacing={3} sx={{ mt: 2 }}>
-                      <Grid item xs={12} md={3}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
-                          <Typography variant="h2" sx={{ mb: 1 }}>💡</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>Ideation</Typography>
-                          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            AI agents suggest features and improvements based on project context
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
-                          <Typography variant="h2" sx={{ mb: 1 }}>⚡</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>Rapid Prototyping</Typography>
-                          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            Trae AI generates boilerplate code and suggests optimal patterns
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
-                          <Typography variant="h2" sx={{ mb: 1 }}>🔍</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>Code Review</Typography>
-                          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            Automated analysis identifies issues before they reach production
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <Box sx={{ textAlign: 'center', p: 2 }}>
-                          <Typography variant="h2" sx={{ mb: 1 }}>🚀</Typography>
-                          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>Deployment</Typography>
-                          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            Optimized, tested, and secure code ready for production
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Box>
-      )
-    },
-
-    // Slide 11: Code Craft AI x Dev Hackathon
-    {
-      title: "Code Craft AI x Dev Hackathon",
-      subtitle: "Building the Future of AI-Assisted Development",
-      content: (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      🏆 Hackathon Challenge
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
-                      Create innovative AI-powered development tools that enhance 
-                      developer productivity and code quality.
-                    </Typography>
-                    <Box sx={{ mb: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>Our Solution:</Typography>
-                      <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                        TraeDevMate - A comprehensive multi-agent system that provides 
-                        intelligent code assistance, automated reviews, and real-time mentoring.
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      <Chip label="Innovation" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="AI-First" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                      <Chip label="Developer Tools" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                  color: 'white',
-                  p: 3,
-                  height: '100%'
-                }}>
-                  <CardContent>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      🌟 Key Achievements
-                    </Typography>
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="body1" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="h6" sx={{ mr: 1 }}>✅</Typography>
-                        Multi-agent architecture implementation
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="h6" sx={{ mr: 1 }}>✅</Typography>
-                        Real-time code analysis and suggestions
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="h6" sx={{ mr: 1 }}>✅</Typography>
-                        Integrated security and performance optimization
-                      </Typography>
-                      <Typography variant="body1" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="h6" sx={{ mr: 1 }}>✅</Typography>
-                        Modern, responsive user interface
-                      </Typography>
-                      <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="h6" sx={{ mr: 1 }}>✅</Typography>
-                        Comprehensive testing and documentation
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Box>
-      )
-    },
-
-    // Slide 12: Real-world Impact
-    {
-      title: "Real-World Impact",
-      subtitle: "Transforming How Developers Work",
-      content: (
-        <Box sx={{ p: 4 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  textAlign: 'center',
-                  p: 3,
-                  height: '280px'
-                }}>
-                  <CardContent>
-                    <Typography variant="h2" sx={{ mb: 2, fontWeight: 'bold' }}>300%</Typography>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Faster Development
-                    </Typography>
-                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                      AI-assisted coding reduces development time 
-                      through intelligent suggestions and automation
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  color: 'white',
-                  textAlign: 'center',
-                  p: 3,
-                  height: '280px'
-                }}>
-                  <CardContent>
-                    <Typography variant="h2" sx={{ mb: 2, fontWeight: 'bold' }}>85%</Typography>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Bug Reduction
-                    </Typography>
-                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                      Proactive code analysis and automated testing 
-                      significantly reduce production bugs
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  color: 'white',
-                  textAlign: 'center',
-                  p: 3,
-                  height: '280px'
-                }}>
-                  <CardContent>
-                    <Typography variant="h2" sx={{ mb: 2, fontWeight: 'bold' }}>95%</Typography>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Code Quality
-                    </Typography>
-                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                      Automated reviews and best practice enforcement 
-                      ensure consistently high-quality code
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          </Grid>
-        </Box>
-      )
-    },
-
-    // Slide 13: Current Development Pain Points
-    {
-      id: 13,
-      title: "Current Development Pain Points",
-      subtitle: "The Fragmented Reality of Modern Software Development",
-      content: [
-        "🔄 Context Switching Nightmare",
-        "• Juggling 10+ tools daily (IDE, Git, CI/CD, Monitoring, Slack)",
-        "• Lost productivity from constant tool switching",
-        "• Mental overhead of remembering different interfaces",
-        "",
-        "⏰ Time-Consuming Deployment Processes",
-        "• Manual configuration of CI/CD pipelines",
-        "• Complex YAML files and deployment scripts",
-        "• Hours spent debugging deployment failures",
-        "",
-        "🐛 Human Error & Quality Issues",
-        "• Inconsistent code reviews and testing",
-        "• Manual dependency management",
-        "• Security vulnerabilities slip through",
-        "",
-        "👥 Team Collaboration Friction",
-        "• Knowledge silos and communication gaps",
-        "• Inconsistent development environments",
-        "• Difficulty onboarding new team members"
-      ],
-      background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)"
-    },
-
-    // Slide 14: The Vision - Single Screen Development
-    {
-      id: 14,
-      title: "The Vision: Single Screen Development",
-      subtitle: "Monk's Revolutionary Approach to Software Lifecycle",
-      content: [
-        "🎯 One Interface, Complete Lifecycle",
-        "• From ideation to production monitoring",
-        "• All development stages visible and manageable",
-        "• No more context switching between tools",
-        "",
-        "🤖 AI Agents as Expert Collaborators",
-        "• DevAgent: Writes and refactors code intelligently",
-        "• TestAgent: Generates comprehensive test suites",
-        "• DeployAgent: Handles deployment and rollbacks",
-        "• MonitorAgent: Analyzes performance and incidents",
-        "",
-        "⚡ Instant Software Delivery",
-        "• One-click deploy to any cloud platform",
-        "• Automated domain configuration and SSL",
-        "• Real-time collaboration and pair programming",
-        "",
-        "🔮 The Future is Agent-Powered",
-        "• Context-rich development environment",
-        "• Self-healing infrastructure capabilities",
-        "• Mobile IDE support for anywhere development"
-      ],
-      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-    },
-
-    // Slide 15: Monk's 11 Core Modules
-    {
-      id: 15,
-      title: "Monk's 11 Core Modules",
-      subtitle: "Complete Development-to-Production Pipeline",
-      content: [
-        "📋 1. Ideation - Creative project planning with AI",
-        "💻 2. Code Editor - Monaco-powered with AI assistance",
-        "🧪 3. Testing - Automated test generation and healing",
-        "📚 4. Git & Versioning - Seamless version control",
-        "⚙️ 5. Build & Config - Visual configuration center",
-        "🚀 6. Deploy - One-click cloud deployment",
-        "",
-        "🌐 7. Domains - Automated DNS and SSL management",
-        "📊 8. Observability - Real-time monitoring and logs",
-        "👥 9. Collaboration - Team coordination and communication",
-        "🤖 10. Agents Console - AI workforce management",
-        "⚙️ 11. Settings - Workspace and integration management",
-        "",
-        "🎯 Each module designed to eliminate traditional pain points",
-        "🔄 Seamless integration between all components",
-        "🚀 Accelerated development from hours to minutes"
-      ],
-      background: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-    },
-
-    // Slide 16: Today's Showcase vs Tomorrow's Potential
-    {
-      id: 16,
-      title: "Today's Showcase vs Tomorrow's Potential",
-      subtitle: "Current Features are Just the Beginning",
-      content: [
-        "🎪 Current Showcase Features",
-        "• Multi-agent code analysis and optimization",
-        "• Intelligent test generation and security scanning",
-        "• Real-time collaboration and documentation",
-        "• Integrated development workflow demonstration",
-        "",
-        "🚀 Expanding Our Vision",
-        "• Multi-Agent Autonomy: End-to-end project delivery",
-        "• AI Dev Pairing: Side-by-side intelligent collaboration",
-        "• Self-Healing Infrastructure: Auto-detection and fixes",
-        "• Mobile IDE: Code and deploy from anywhere",
-        "",
-        "💡 The Limitless Potential",
-        "• Natural language to production-ready applications",
-        "• Predictive development with proactive suggestions",
-        "• Cross-platform deployment with zero configuration",
-        "• Enterprise-grade security and compliance automation",
-        "",
-        "🌟 Today's demo is tomorrow's foundation"
-      ],
-      background: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)"
-    },
-
-    // Slide 17: The Developer Experience Revolution
-    {
-      id: 17,
-      title: "The Developer Experience Revolution",
-      subtitle: "From Fragmented Tools to Unified Intelligence",
-      content: [
-        "⚡ Before Monk: The Painful Reality",
-        "• 15+ tools in daily workflow",
-        "• 40% of time lost to context switching",
-        "• 3-5 hours for simple deployments",
-        "• Manual error-prone processes",
-        "",
-        "🎯 With Monk: The Unified Future",
-        "• Single interface for entire lifecycle",
-        "• AI agents handle repetitive tasks",
-        "• Minutes from code to production",
-        "• Intelligent error prevention and healing",
-        "",
-        "📈 Measurable Impact",
-        "• 300% faster development cycles",
-        "• 85% reduction in deployment errors",
-        "• 90% less time on DevOps tasks",
-        "• 100% focus on creative problem solving",
-        "",
-        "🌟 This is not just an IDE - it's a development revolution"
-      ],
-      background: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"
-    },
-
-    // Slide 18: Use Cases - Real World Applications
-    {
-      id: 18,
-      title: "Real-World Applications",
-      subtitle: "Monk Transforms Every Development Scenario",
-      content: [
-        "👨‍💻 Solo Developer Launching SaaS",
-        "• Build MVP in days, not months",
-        "• One-person full-stack development",
-        "• Automated testing and deployment",
-        "• Production monitoring without DevOps expertise",
-        "",
-        "🚀 Startup with Distributed Team",
-        "• Centralized collaboration across time zones",
-        "• Consistent development environments",
-        "• Rapid iteration and feature delivery",
-        "• Seamless onboarding of new developers",
-        "",
-        "🏢 Enterprise Development Teams",
-        "• Integration with existing infrastructure",
-        "• Compliance and audit trail automation",
-        "• Multi-environment deployment management",
-        "• Advanced security and access controls",
-        "",
-        "🎓 Educational Institutions",
-        "• Teaching modern development practices",
-        "• Simplified learning curve for students",
-        "• Real-world project experience"
-      ],
-      background: "linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)"
-    },
-
-    // Slide 19: The Future We're Building
-    {
-      id: 19,
-      title: "The Future We're Building",
-      subtitle: "Beyond Today's Demonstration",
-      content: [
-        "🔮 Next-Generation Features",
-        "• Natural language to full applications",
-        "• Predictive development with AI insights",
-        "• Cross-platform deployment automation",
-        "• Intelligent resource optimization",
-        "",
-        "🌐 Global Development Ecosystem",
-        "• Plugin marketplace for specialized tools",
-        "• Community-driven agent development",
-        "• Integration with any cloud provider",
-        "• Open API for custom workflows",
-        "",
-        "🎯 Our Mission",
-        "• Democratize software development",
-        "• Make complex deployments simple",
-        "• Enable anyone to build and ship software",
-        "• Accelerate innovation across industries",
-        "",
-        "💫 The future of development is intelligent, unified, and accessible"
-      ],
-      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-    },
-
-    // Slide 20: Call to Action
-    {
-      id: 20,
-      title: "Join the Development Revolution",
-      subtitle: "Be Part of the Future We're Creating",
-      content: [
-        "🚀 What You've Seen Today",
-        "• Live demonstration of AI-powered development",
-        "• Real-time code analysis and optimization",
-        "• Intelligent testing and security scanning",
-        "• Seamless collaboration and documentation",
-        "",
-        "🌟 What's Coming Next",
-        "• Full Monk IDE with 11 integrated modules",
-        "• Advanced AI agents for autonomous development",
-        "• Enterprise-grade security and compliance",
-        "• Mobile development capabilities",
-        "",
-        "🤝 Get Involved",
-        "• Follow our development journey",
-        "• Join our beta testing program",
-        "• Contribute to the open-source ecosystem",
-        "• Shape the future of software development",
-        "",
-        "💡 Together, we're not just building tools",
-        "🎯 We're revolutionizing how software gets made",
-        "",
-        "Thank you for being part of this journey! 🙏"
-      ],
-      background: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)"
-    }
-  ];
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const toggleAutoPlay = () => {
-    setIsAutoPlay(!isAutoPlay);
-  };
-
-  useEffect(() => {
-    if (isAutoPlay) {
-      const interval = setInterval(() => {
-        nextSlide();
-      }, 8000); // 8 seconds per slide
-      return () => clearInterval(interval);
-    }
-  }, [isAutoPlay, currentSlide]);
-
-  return (
-    <Box
-      sx={{
-        height: '100vh',
-        width: '100vw',
-        position: 'relative',
-        overflow: 'hidden',
-        background: slides[currentSlide].background,
-        transition: 'background 0.8s ease-in-out',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      {/* Animated Background Particles */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: `
-              radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
-              radial-gradient(circle at 40% 40%, rgba(255,255,255,0.05) 0%, transparent 50%)
-            `,
-            animation: 'float 6s ease-in-out infinite'
-          }
-        }}
-      />
-
-      {/* Navigation Header */}
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: 10,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '20px 40px',
-          background: 'rgba(0,0,0,0.1)',
-          backdropFilter: 'blur(10px)'
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'white',
-            fontWeight: 'bold',
-            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-          }}
-        >
-          TraeDevMate - Hackathon Presentation
-        </Typography>
-        
-        <Typography
-          variant="body1"
-          sx={{
-            color: 'white',
-            opacity: 0.9,
-            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-          }}
-        >
-          {currentSlide + 1} / {slides.length}
-        </Typography>
-
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <IconButton
-            onClick={prevSlide}
-            sx={{
-              color: 'white',
-              background: 'rgba(255,255,255,0.2)',
-              '&:hover': {
-                background: 'rgba(255,255,255,0.3)',
-                transform: 'scale(1.1)'
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          
-          <IconButton
-            onClick={toggleAutoPlay}
-            sx={{
-              color: 'white',
-              background: isAutoPlay ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.2)',
-              '&:hover': {
-                background: isAutoPlay ? 'rgba(76,175,80,0.4)' : 'rgba(255,255,255,0.3)',
-                transform: 'scale(1.1)'
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {isAutoPlay ? <PauseIcon /> : <PlayArrowIcon />}
-          </IconButton>
-          
-          <IconButton
-            onClick={nextSlide}
-            sx={{
-              color: 'white',
-              background: 'rgba(255,255,255,0.2)',
-              '&:hover': {
-                background: 'rgba(255,255,255,0.3)',
-                transform: 'scale(1.1)'
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <ArrowForwardIcon />
-          </IconButton>
-        </Box>
-      </Box>
-
-      {/* Main Content Area */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px',
-          position: 'relative',
-          zIndex: 5
-        }}
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -100, scale: 0.9 }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-            style={{
-              width: '100%',
-              maxWidth: '1200px',
-              textAlign: 'center'
-            }}
-          >
-            <Box
-              sx={{
-                background: 'rgba(255,255,255,0.95)',
-                borderRadius: '20px',
-                padding: '60px',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.3)'
-              }}
-            >
-              <Typography
-                variant="h2"
-                sx={{
-                  fontWeight: 'bold',
-                  marginBottom: '20px',
-                  background: 'linear-gradient(45deg, #2196F3, #21CBF3)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  textShadow: 'none'
-                }}
-              >
-                {slides[currentSlide].title}
-              </Typography>
-              
-              <Typography
-                variant="h5"
-                sx={{
-                  color: '#666',
-                  marginBottom: '40px',
-                  fontWeight: 300
-                }}
-              >
-                {slides[currentSlide].subtitle}
-              </Typography>
-              
-              <Box sx={{ textAlign: 'left', maxWidth: '800px', margin: '0 auto' }}>
-                {slides[currentSlide].content.map((line, index) => (
-                  <Typography
-                    key={index}
-                    variant={line.startsWith('•') ? 'body1' : line === '' ? 'body2' : 'h6'}
-                    sx={{
-                      marginBottom: line === '' ? '20px' : '8px',
-                      color: line.startsWith('🎯') || line.startsWith('⚡') || line.startsWith('🚀') || line.startsWith('🌟') || line.startsWith('💡') || line.startsWith('🔮') || line.startsWith('🌐') || line.startsWith('🤝') ? '#1976d2' : '#333',
-                      fontWeight: line.startsWith('•') ? 400 : line === '' ? 400 : 600,
-                      fontSize: line.startsWith('•') ? '1rem' : line === '' ? '0.5rem' : '1.1rem',
-                      lineHeight: 1.6,
-                      paddingLeft: line.startsWith('•') ? '20px' : '0'
-                    }}
-                  >
-                    {line === '' ? '\u00A0' : line}
-                  </Typography>
-                ))}
-              </Box>
-            </Box>
-          </motion.div>
-        </AnimatePresence>
-      </Box>
-
-      {/* Progress Indicators */}
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: 10,
-          display: 'flex',
-          justifyContent: 'center',
-          padding: '20px',
-          gap: 1
-        }}
-      >
-        {slides.map((_, index) => (
-          <Box
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            sx={{
-              width: index === currentSlide ? '40px' : '12px',
-              height: '12px',
-              borderRadius: '6px',
-              background: index === currentSlide 
-                ? 'rgba(255,255,255,0.9)' 
-                : 'rgba(255,255,255,0.4)',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                background: 'rgba(255,255,255,0.7)',
-                transform: 'scale(1.2)'
-              },
-              animation: index === currentSlide ? 'pulse 2s infinite' : 'none'
-            }}
-          />
-        ))}
-      </Box>
-
-      {/* CSS Animations */}
-      <style>
-        {`
-          @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
           }
           
           @keyframes float {
