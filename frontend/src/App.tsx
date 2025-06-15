@@ -10,7 +10,7 @@ import {
   Box,
 } from '@mui/material';
 
-// Import all components
+// Components & Pages
 import Navigation from './components/Navigation';
 import Dashboard from './pages/Dashboard';
 import MultiAgentOrchestrator from './pages/MultiAgentOrchestrator';
@@ -22,8 +22,9 @@ import DocGenerator from './pages/DocGenerator';
 import PRReviewer from './pages/PRReviewer';
 import LiveWorkflowDemo from './components/LiveWorkflowDemo';
 import HackathonPresentation from './components/HackathonPresentation';
+import Collaboration from './pages/Collaboration';
 
-// Create stunning hackathon-ready theme
+// Dark theme configuration
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -106,15 +107,16 @@ const App: React.FC = () => {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {/* Header */}
+        
+        {/* App Header */}
         <AppBar position="static" elevation={0}>
           <Toolbar>
-            <Typography 
-              variant="h6" 
-              component="div" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
                 flexGrow: 1,
-                background: 'linear-gradient(45deg, #00ff88, #66ffaa)',
+                background: 'linear-gradient(45deg,rgb(145, 217, 183), #66ffaa)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 fontWeight: 700,
@@ -128,28 +130,24 @@ const App: React.FC = () => {
           </Toolbar>
         </AppBar>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Menu */}
         <Navigation />
 
         {/* Main Content */}
         <Box component="main" sx={{ flex: 1, backgroundColor: 'background.default', p: 0 }}>
           <Routes>
-            {/* Default route redirects to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            
-            {/* Dashboard - Home page */}
             <Route path="/dashboard" element={<Dashboard />} />
-            
-            {/* Multi-Agent Orchestrator */}
             <Route path="/orchestrator" element={<MultiAgentOrchestrator />} />
-            
-            {/* Individual AI Agents */}
             <Route path="/ideation" element={<Ideation />} />
             <Route path="/code-optimizer" element={<CodeOptimizer />} />
             <Route path="/test-generator" element={<TestGenerator />} />
             <Route path="/security-analyzer" element={<SecurityAnalyzer />} />
             <Route path="/doc-generator" element={<DocGenerator />} />
             <Route path="/pr-reviewer" element={<PRReviewer />} />
+            
+            {/* Collaboration */}
+            <Route path="/collaboration" element={<Collaboration />} />
             
             {/* Live Demo */}
             <Route path="/live-demo" element={<LiveWorkflowDemo />} />

@@ -18,6 +18,7 @@ import {
   RateReview as ReviewIcon,
   AutoAwesome as AutoAwesomeIcon,
   Slideshow as SlideshowIcon
+  Group as GroupIcon
 } from '@mui/icons-material';
 
 interface NavigationItem {
@@ -81,6 +82,10 @@ const navigationItems: NavigationItem[] = [
     label: 'Hackathon Presentation',
     icon: <SlideshowIcon />,
     color: '#ff6b35'
+    path: '/collaboration',
+    label: 'Collaboration',
+    icon: <GroupIcon />,
+    color: '#2196f3'
   }
 ];
 
